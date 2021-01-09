@@ -21,10 +21,14 @@ import (
 func Generate(dir, out string) error {
 	docs := godoc(dir)
 	nav := Nav()
-	page := NewPage(Html(Body(
-		nav,
-		docs,
-	)))
+	page := NewPage(Html(
+		Head(
+			Style(theme()),
+		),
+		Body(
+			nav,
+			docs,
+		)))
 	toc.MakeTOC(nav, docs, "h1", "h2", "h3")
 	return page.SaveAs(out)
 }
