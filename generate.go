@@ -18,15 +18,15 @@ import (
 )
 
 // Generate go documentation for the given directory and its children.
-func Generate(dir string) (*Page, error) {
-	_, err := golist(dir)
+func Generate(dir string) (p *Page, err error) {
+	_, err = golist(dir) // check that it is a package
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	docs := godoc(dir)
 	nav := Nav()
-	page := NewPage(Html(
+	p = NewPage(Html(
 		Head(
 			Style(theme()),
 		),
@@ -35,7 +35,7 @@ func Generate(dir string) (*Page, error) {
 			docs,
 		)),
 	)
-	return page, nil
+	return
 }
 
 func golist(dir string) (string, error) {
