@@ -157,6 +157,12 @@ func docPkg(pkgName, dir string) (*Element, error) {
 			),
 		)
 	}
+
+	types := make([]string, len(p.Types))
+	for i, t := range p.Types {
+		types[i] = t.Name
+	}
+	s.With("Types: ", strings.Join(types, ", "))
 	return s, nil
 }
 
