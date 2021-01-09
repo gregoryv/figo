@@ -19,8 +19,7 @@ func run(cmd wolf.Command) int {
 	var (
 		cli  = cmdline.NewParser(cmd.Args()...)
 		help = cli.Flag("-h, --help")
-		out  = cli.Option("-o, --output").String("")
-		dir  = cli.Optional("DIR").String(".")
+		dir  = "."
 	)
 
 	switch {
@@ -40,16 +39,6 @@ func run(cmd wolf.Command) int {
 		return cmd.Stop(1)
 	}
 
-	switch {
-	case out != "":
-		err = page.SaveAs(out)
-		if err != nil {
-			fmt.Fprintln(cmd.Stderr(), err)
-			return cmd.Stop(1)
-		}
-	default:
-		page.WriteTo(cmd.Stdout())
-
-	}
+	page.WriteTo(cmd.Stdout())
 	return cmd.Stop(0)
 }
