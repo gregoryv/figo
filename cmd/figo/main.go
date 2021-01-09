@@ -33,7 +33,12 @@ func run(cmd wolf.Command) int {
 		return cmd.Stop(0)
 	}
 
-	err := figo.Generate(dir, out)
+	page, err := figo.Generate(dir)
+	if err != nil {
+		fmt.Fprintln(cmd.Stderr(), err)
+		return cmd.Stop(1)
+	}
+	err = page.SaveAs(out)
 	if err != nil {
 		fmt.Fprintln(cmd.Stderr(), err)
 		return cmd.Stop(1)

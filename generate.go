@@ -18,7 +18,7 @@ import (
 )
 
 // Generate go documentation for the given directory and its children.
-func Generate(dir, out string) error {
+func Generate(dir string) (*Page, error) {
 	docs := godoc(dir)
 	nav := Nav()
 	page := NewPage(Html(
@@ -30,7 +30,7 @@ func Generate(dir, out string) error {
 			docs,
 		)))
 	toc.MakeTOC(nav, docs, "h1", "h2", "h3")
-	return page.SaveAs(out)
+	return page, nil
 }
 
 func golist(dir string) (string, error) {

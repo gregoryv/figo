@@ -5,7 +5,7 @@ import (
 )
 
 func Test_generate(t *testing.T) {
-	err := Generate(".", "./docs/index.html")
+	_, err := Generate(".")
 	if err != nil {
 		t.Error(err)
 	}
