@@ -32,7 +32,6 @@ func run(cmd wolf.Command) int {
 		return cmd.Stop(0)
 	}
 
-	fmt.Println(dir)
 	page, err := figo.Generate(dir)
 	if err != nil {
 		fmt.Fprintln(cmd.Stderr(), err)

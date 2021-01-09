@@ -10,10 +10,21 @@ func theme() *CSS {
 	)
 	css.Style("body",
 		"padding: 1em 1.618em",
+		"padding-bottom: 1640px",
 		"font-family: sans-serif",
 	)
-	css.Style("li.h3",
+	css.Style("li.h1",
+		"margin-top: 1.618em",
+	)
+	css.Style("li.h2",
 		"margin-left: 1.618em",
+	)
+	css.Style("li.h2:last-child",
+		"margin-bottom: 1.618em",
+	)
+	css.Style("h1",
+		"font-size: 1.618em",
+		"border-bottom: 3px solid rgb(55, 94, 171)",
 	)
 	css.Style("a:link, a:visited",
 		"color: rgb(55, 94, 171)", // godoc blue
@@ -21,6 +32,12 @@ func theme() *CSS {
 	)
 	css.Style("a:hover",
 		"text-decoration: underline",
+	)
+	css.Style("li",
+		"list-style-type: none",
+	)
+	css.Style(".empty",
+		"display: none",
 	)
 	return css
 }
