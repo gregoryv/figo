@@ -38,7 +38,7 @@ func Generate(dir string) (*Page, error) {
 			docs,
 		)),
 	)
-	MakeTOC(nav, docs, "h1", "h2", "h3")
+	//MakeTOC(nav, docs, "h1", "h2", "h3")
 	return page, nil
 }
 
@@ -138,7 +138,6 @@ func docPkg(pkgName, dir string) (*Element, error) {
 
 	s := Section(
 		H1(pkgName),
-		P(toHTML(p.Doc)),
 	)
 	for _, f := range p.Funcs {
 		var buf bytes.Buffer
@@ -147,13 +146,15 @@ func docPkg(pkgName, dir string) (*Element, error) {
 		var class interface{}
 		var p interface{}
 		if f.Doc == "" {
-			class = Class("empty")
+			//class = Class("empty")
 		} else {
 			p = P(toHTML(f.Doc))
 		}
 		s.With(
-			H2(fn, class),
-			p,
+			Section(Class("func"),
+				H2(fn, class),
+				p,
+			),
 		)
 	}
 	return s, nil

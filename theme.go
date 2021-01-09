@@ -19,12 +19,15 @@ func theme() *CSS {
 	css.Style("li.h2",
 		"margin-left: 1.618em",
 	)
-	css.Style("li.h2:last-child",
-		"margin-bottom: 1.618em",
+	css.Style("section.func:last-child",
+		"margin-bottom: 3.618em",
 	)
 	css.Style("h1",
 		"font-size: 1.618em",
 		"border-bottom: 3px solid rgb(55, 94, 171)",
+	)
+	css.Style("h2",
+		"font-size: 1em",
 	)
 	css.Style("a:link, a:visited",
 		"color: rgb(55, 94, 171)", // godoc blue
