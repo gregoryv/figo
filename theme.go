@@ -29,18 +29,8 @@ func theme() *CSS {
 	css.Style("h2",
 		"font-size: 1em",
 	)
-	css.Style("a:link, a:visited",
-		"color: rgb(55, 94, 171)", // godoc blue
-		"text-decoration: none",
-	)
-	css.Style("a:hover",
-		"text-decoration: underline",
-	)
-	css.Style("li",
-		"list-style-type: none",
-	)
-	css.Style(".empty",
-		"display: none",
+	css.Style("h3",
+		"font-size: 1em",
 	)
 	return css
 }

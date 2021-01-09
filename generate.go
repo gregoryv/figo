@@ -19,9 +19,8 @@ import (
 
 // Generate go documentation for the given directory and its children.
 func Generate(dir string) (p *Page, err error) {
-	_, err = golist(dir) // check that it is a package
-	if err != nil {
-		return
+	if !isPackage(dir) {
+		return nil, fmt.Errorf("%v: not a package", dir)
 	}
 
 	docs := godoc(dir)
@@ -36,6 +35,11 @@ func Generate(dir string) (p *Page, err error) {
 		)),
 	)
 	return
+}
+
+func isPackage(dir string) bool {
+	name, err := golist(dir)
+	return err == nil && name != ""
 }
 
 func golist(dir string) (string, error) {
@@ -88,10 +92,41 @@ func docPkg(pkgName, dir string) (*Element, error) {
 	s := Section(
 		H1(pkgName),
 	)
-	for _, f := range p.Funcs {
-		var buf bytes.Buffer
-		printer.Fprint(&buf, fset, f.Decl)
-		fn := buf.String()[5:] // remove func
+	addFunc(s, fset, p.Funcs)
+
+	types := Section(
+		H2("Types"),
+	)
+	for _, t := range p.Types {
+		types.With(
+			Section(Class("type"),
+				H3(t.Name),
+				Div(Pre(printHTML(fset, t.Decl))),
+				strings.Join(funcNames(t.Funcs), ", "),
+			),
+		)
+	}
+	s.With(types)
+	return s, nil
+}
+
+func printHTML(fset *token.FileSet, node interface{}) string {
+	var buf bytes.Buffer
+	printer.Fprint(&buf, fset, node)
+	return buf.String()
+}
+
+func funcNames(funcs []*doc.Func) []string {
+	names := make([]string, len(funcs))
+	for i, f := range funcs {
+		names[i] = f.Name
+	}
+	return names
+}
+
+func addFunc(s *Element, fset *token.FileSet, funcs []*doc.Func) {
+	for _, f := range funcs {
+		fn := printHTML(fset, f.Decl)[5:]
 		var class interface{}
 		var p interface{}
 		if f.Doc == "" {
@@ -106,13 +141,6 @@ func docPkg(pkgName, dir string) (*Element, error) {
 			),
 		)
 	}
-
-	types := make([]string, len(p.Types))
-	for i, t := range p.Types {
-		types[i] = t.Name
-	}
-	s.With("Types: ", strings.Join(types, ", "))
-	return s, nil
 }
 
 func toHTML(v string) string {
