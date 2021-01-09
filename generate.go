@@ -12,12 +12,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 
-	"github.com/gregoryv/web"
 	. "github.com/gregoryv/web"
-	"github.com/gregoryv/web/toc"
 )
 
 // Generate go documentation for the given directory and its children.
@@ -38,56 +35,8 @@ func Generate(dir string) (*Page, error) {
 			docs,
 		)),
 	)
-	//MakeTOC(nav, docs, "h1", "h2", "h3")
 	return page, nil
 }
-
-func MakeTOC(dest, root *web.Element, names ...string) *web.Element {
-	toc.GenerateIDs(root, names...)
-	toc.GenerateAnchors(root, names...)
-	ul := ParseTOC(root, names...)
-	dest.With(ul)
-	return ul
-}
-
-func ParseTOC(root *web.Element, names ...string) *web.Element {
-	ul := web.Ul()
-	web.WalkElements(root, func(e *web.Element) {
-		for _, name := range names {
-			if e.Name == name {
-				if hasClass(e, "empty") {
-					ul.With(web.Li(web.Class(name), e.Text()))
-					continue
-				}
-
-				a := web.A(web.Href("#"+idOf(e)), e.Text())
-				ul.With(web.Li(web.Class(name), a))
-			}
-		}
-	})
-	return ul
-}
-
-func hasClass(e *Element, class string) bool {
-	for _, attr := range e.Attributes {
-		if attr.Name == "class" {
-			return strings.Contains(attr.Val, class)
-		}
-	}
-	return false
-}
-
-func idOf(e *Element) string {
-	for _, attr := range e.Attributes {
-		if attr.Name == "id" {
-			return attr.Val
-		}
-	}
-	txt := idChars.ReplaceAllString(e.Text(), "")
-	return strings.ToLower(txt)
-}
-
-var idChars = regexp.MustCompile(`\W`)
 
 func golist(dir string) (string, error) {
 	out, err := exec.Command("go", "list", dir).CombinedOutput()
@@ -178,23 +127,6 @@ func mustParse(fset *token.FileSet, filename, src string) *ast.File {
 		panic(err)
 	}
 	return f
-}
-
-func fileTree(dir string) *Element {
-	ul := Ul()
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if skipPath(info) {
-			return filepath.SkipDir
-		}
-		if !info.IsDir() {
-			ul.With(Li(path))
-		}
-		return nil
-	})
-	return ul
 }
 
 func skipPath(info os.FileInfo) bool {
