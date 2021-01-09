@@ -2,6 +2,7 @@ package figo
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/doc"
 	"go/parser"
@@ -19,6 +20,11 @@ import (
 
 // Generate go documentation for the given directory and its children.
 func Generate(dir string) (*Page, error) {
+	_, err := golist(dir)
+	if err != nil {
+		return nil, err
+	}
+
 	docs := godoc(dir)
 	nav := Nav()
 	page := NewPage(Html(
@@ -34,9 +40,9 @@ func Generate(dir string) (*Page, error) {
 }
 
 func golist(dir string) (string, error) {
-	out, err := exec.Command("go", "list", dir).Output()
+	out, err := exec.Command("go", "list", dir).CombinedOutput()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%s", string(out))
 	}
 	return strings.TrimSpace(string(out)), nil
 }
