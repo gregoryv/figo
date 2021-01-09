@@ -2,6 +2,7 @@ package figo
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -9,10 +10,24 @@ import (
 )
 
 func Generate(dir, out string) error {
+	pkg, err := golist(dir)
+	if err != nil {
+		return err
+	}
+
 	page := NewPage(Html(Body(
+		H1(pkg),
 		fileTree(dir),
 	)))
 	return page.SaveAs(out)
+}
+
+func golist(dir string) (string, error) {
+	out, err := exec.Command("go", "list", dir).Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
 }
 
 func fileTree(dir string) *Element {

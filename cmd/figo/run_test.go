@@ -1,18 +1,22 @@
 package main
 
 import (
+	"os"
 	"testing"
 
 	"github.com/gregoryv/wolf"
 )
 
 func Test_default_behaviour(t *testing.T) {
+	orig, _ := os.Getwd()
 	cmd := wolf.NewTCmd("figo")
 	defer cmd.Cleanup()
+	defer os.RemoveAll("docs.html")
 
+	os.Chdir(orig)
 	code := run(cmd)
 	if code != 0 {
-		t.Error(cmd.Dump())
+		t.Fail()
 	}
 }
 
