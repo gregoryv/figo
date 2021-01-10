@@ -85,16 +85,13 @@ func docPkg(pkgName, dir string) (*Element, error) {
 	)
 	// Generate index
 	dl := Dl()
-	indexSection := Section(
-		H2("Index"),
-		dl,
-	)
-	docSection := Section(
-		H2("Variables"),
-	)
+	indexSection := Section(H2("Index"), dl)
+	docSection := Section(H2("Variables"))
 	s.With(indexSection, docSection)
+
+	// Package funcs
 	for _, f := range p.Funcs {
-		lnk := genFunc(fset, f)
+		lnk := genFuncLink(fset, f)
 		dl.With(
 			Dd(lnk),
 		)
@@ -105,17 +102,19 @@ func docPkg(pkgName, dir string) (*Element, error) {
 		)
 	}
 
+	// Types
 	for _, t := range p.Types {
-		dl.With(Dd("type ", t.Name))
+		dl.With(Dd(A(Href("#"+t.Name), "type ", t.Name)))
 		docSection.With(
+			A(Name(t.Name)),
 			H2("type ", t.Name),
 			P(template.HTMLEscapeString(t.Doc)),
-			Pre(Code(printHTML(fset, t))),
+			Pre(Code(printHTML(fset, t.Decl))),
 		)
 
 		for _, f := range t.Funcs {
 			dl.With(
-				Dd("&nbsp;&nbsp;", genFunc(fset, f)),
+				Dd("&nbsp;&nbsp;", genFuncLink(fset, f)),
 			)
 			docSection.With(
 				A(Name(f.Name)),
@@ -128,11 +127,15 @@ func docPkg(pkgName, dir string) (*Element, error) {
 	return s, nil
 }
 
-func genFunc(fset *token.FileSet, f *doc.Func) interface{} {
+func genFuncLink(fset *token.FileSet, f *doc.Func) interface{} {
 	if f.Doc == "" {
 		return printHTML(fset, f.Decl)
 	}
 	return A(Href("#"+f.Name), printHTML(fset, f.Decl))
+}
+
+func genTypeLink(fset *token.FileSet, t *doc.Type) interface{} {
+	return A(Href("#"+t.Name), t.Name)
 }
 
 func printHTML(fset *token.FileSet, node interface{}) string {
