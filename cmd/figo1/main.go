@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/gregoryv/cmdline"
-	"github.com/gregoryv/figo"
 	"github.com/gregoryv/wolf"
 )
 
@@ -32,7 +31,7 @@ func run(cmd wolf.Command) int {
 		return cmd.Stop(0)
 	}
 
-	page, err := figo.Generate(dir)
+	page, err := Generate(dir)
 	if err != nil {
 		fmt.Fprintln(cmd.Stderr(), err)
 		return cmd.Stop(1)

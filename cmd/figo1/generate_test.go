@@ -1,4 +1,4 @@
-package figo
+package main
 
 import (
 	"testing"
