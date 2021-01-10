@@ -77,15 +77,28 @@ func docPkg(pkgName, dir string) (*Element, error) {
 	s := Section(
 		H1("Package ", path.Base(pkgName)),
 		Dl(
-			Dt(`import "`, pkgName, `"`),
-			Dt("Overview"),
-			Dt("Index"),
-			Dt("Examples"),
+			Dd(`import "`, pkgName, `"`),
+		),
+		Dl(
+			Dt(A(Href("#pkg-overview"), "Overview")),
+			Dt(A(Href("#pkg-index"), "Index")),
+			Dt(A(Href("#pkg-examples"), "Examples")),
+		),
+		Section(
+			A(Name("pkg-overview")),
+			H2("Overview"),
+			toHTML(p.Doc),
 		),
 	)
 	// Generate index
 	dl := Dl()
-	indexSection := Section(H2("Index"), dl)
+	examplesIndex := Section(H3("Examples"))
+	indexSection := Section(
+		A(Name("pkg-index")),
+		H2("Index"),
+		dl,
+		examplesIndex,
+	)
 	docSection := Section(H2("Variables"))
 	s.With(indexSection, docSection)
 
