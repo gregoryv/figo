@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -23,18 +24,86 @@ func Generate(dir string) (p *Page, err error) {
 		return nil, fmt.Errorf("%v: not a package", dir)
 	}
 
-	docs := godoc(dir)
-	nav := Nav()
+	docs, err := godoc(dir)
+	if err != nil {
+		return nil, err
+	}
+
 	p = NewPage(Html(
 		Head(
+			Meta(Charset("utf-8")),
+			Meta(Name("viewport"), Content("width=device-width, initial-scale=1")),
+			Meta(Name("theme-color"), Content("#375EAB")),
 			Style(theme()),
 		),
 		Body(
-			nav,
+			Div(Class("top"), "FiGo1"),
 			docs,
 		)),
 	)
 	return
+}
+
+func godoc(dir string) (*Element, error) {
+	w := Article()
+	pkgName, err := golist(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := docPkg(pkgName, dir)
+	if err != nil {
+		return nil, err
+	}
+	w.With(s)
+	return w, nil
+}
+
+func docPkg(pkgName, dir string) (*Element, error) {
+	// Parse files
+	files := make([]*ast.File, 0)
+	fset := token.NewFileSet()
+	gofiles, _ := filepath.Glob(dir + "/*.go")
+	for _, f := range gofiles {
+		data, _ := ioutil.ReadFile(f)
+		files = append(files, mustParse(fset, f, string(data)))
+	}
+	p, err := doc.NewFromFiles(fset, files, pkgName)
+	if err != nil {
+		return nil, err
+	}
+	// Build section
+	s := Section(
+		H1("Package ", path.Base(pkgName)),
+		Dl(
+			Dt(`import "`, pkgName, `"`),
+			Dt("Overview"),
+			Dt("Index"),
+			Dt("Examples"),
+		),
+	)
+
+	dl := Dl()
+	indexSection := Section(
+		H2("Index"),
+		dl,
+	)
+	s.With(indexSection)
+	for _, f := range p.Funcs {
+		dl.With(
+			Dd(printHTML(fset, f.Decl)),
+		)
+	}
+
+	for _, t := range p.Types {
+		dl.With(Dd(t.Name))
+		for _, f := range t.Funcs {
+			dl.With(
+				Dd("&nbsp;&nbsp;", printHTML(fset, f.Decl)),
+			)
+		}
+	}
+	return s, nil
 }
 
 func isPackage(dir string) bool {
@@ -48,66 +117,6 @@ func golist(dir string) (string, error) {
 		return "", fmt.Errorf("%s", string(out))
 	}
 	return strings.TrimSpace(string(out)), nil
-}
-
-func godoc(dir string) *Element {
-	w := Article()
-	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if skipPath(info) {
-			return filepath.SkipDir
-		}
-		if info.IsDir() {
-			dp := dir + "/" + path
-			pkgName, err := golist(dp)
-			if err != nil || pkgName == "" {
-				return filepath.SkipDir
-			}
-			s, err := docPkg(pkgName, dp)
-			if err != nil {
-				return filepath.SkipDir
-			}
-			w.With(s)
-		}
-		return nil
-	})
-	return w
-}
-
-func docPkg(pkgName, dir string) (*Element, error) {
-	files := make([]*ast.File, 0)
-	fset := token.NewFileSet()
-	gofiles, _ := filepath.Glob(dir + "/*.go")
-	for _, f := range gofiles {
-		data, _ := ioutil.ReadFile(f)
-		files = append(files, mustParse(fset, f, string(data)))
-	}
-	p, err := doc.NewFromFiles(fset, files, pkgName)
-	if err != nil {
-		return nil, err
-	}
-
-	s := Section(
-		H1(pkgName),
-	)
-	addFunc(s, fset, p.Funcs)
-
-	types := Section(
-		H2("Types"),
-	)
-	for _, t := range p.Types {
-		types.With(
-			Section(Class("type"),
-				H3(t.Name),
-				Div(Pre(printHTML(fset, t.Decl))),
-				strings.Join(funcNames(t.Funcs), ", "),
-			),
-		)
-	}
-	s.With(types)
-	return s, nil
 }
 
 func printHTML(fset *token.FileSet, node interface{}) string {
@@ -126,7 +135,7 @@ func funcNames(funcs []*doc.Func) []string {
 
 func addFunc(s *Element, fset *token.FileSet, funcs []*doc.Func) {
 	for _, f := range funcs {
-		fn := printHTML(fset, f.Decl)[5:]
+		fn := printHTML(fset, f.Decl)
 		var class interface{}
 		var p interface{}
 		if f.Doc == "" {
