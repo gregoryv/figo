@@ -138,9 +138,10 @@ func docPkg(pkgName, dir string) (*Element, error) {
 			Dd(lnk),
 		)
 		docSection.With(
+			A(Name(f.Name)),
 			H3("func ", f.Name),
 			Pre(printHTML(fset, f.Decl)),
-			P(f.Doc),
+			P(template.HTMLEscapeString(f.Doc)),
 		)
 	}
 
@@ -155,6 +156,17 @@ func docPkg(pkgName, dir string) (*Element, error) {
 		)
 
 		for _, f := range t.Funcs {
+			dl.With(
+				Dd("&nbsp;&nbsp;", genFuncLink(fset, f)),
+			)
+			docSection.With(
+				A(Name(f.Name)),
+				H3("func ", f.Name),
+				Pre(Code(printHTML(fset, f.Decl))),
+				P(template.HTMLEscapeString(f.Doc)),
+			)
+		}
+		for _, f := range t.Methods {
 			dl.With(
 				Dd("&nbsp;&nbsp;", genFuncLink(fset, f)),
 			)
