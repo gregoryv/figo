@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	. "github.com/gregoryv/web"
 )
@@ -82,28 +83,68 @@ func docPkg(pkgName, dir string) (*Element, error) {
 			Dt("Examples"),
 		),
 	)
-
+	// Generate index
 	dl := Dl()
 	indexSection := Section(
 		H2("Index"),
 		dl,
 	)
-	s.With(indexSection)
+	docSection := Section(
+		H2("Variables"),
+	)
+	s.With(indexSection, docSection)
 	for _, f := range p.Funcs {
+		lnk := genFunc(fset, f)
 		dl.With(
-			Dd(printHTML(fset, f.Decl)),
+			Dd(lnk),
+		)
+		docSection.With(
+			H3("func ", f.Name),
+			Pre(printHTML(fset, f.Decl)),
+			P(f.Doc),
 		)
 	}
 
 	for _, t := range p.Types {
-		dl.With(Dd(t.Name))
+		dl.With(Dd("type ", t.Name))
+		docSection.With(
+			H2("type ", t.Name),
+			P(template.HTMLEscapeString(t.Doc)),
+			Pre(Code(printHTML(fset, t))),
+		)
+
 		for _, f := range t.Funcs {
 			dl.With(
-				Dd("&nbsp;&nbsp;", printHTML(fset, f.Decl)),
+				Dd("&nbsp;&nbsp;", genFunc(fset, f)),
+			)
+			docSection.With(
+				A(Name(f.Name)),
+				H3("func ", f.Name),
+				Pre(Code(printHTML(fset, f.Decl))),
+				P(template.HTMLEscapeString(f.Doc)),
 			)
 		}
 	}
 	return s, nil
+}
+
+func genFunc(fset *token.FileSet, f *doc.Func) interface{} {
+	if f.Doc == "" {
+		return printHTML(fset, f.Decl)
+	}
+	return A(Href("#"+f.Name), printHTML(fset, f.Decl))
+}
+
+func printHTML(fset *token.FileSet, node interface{}) string {
+	var buf bytes.Buffer
+	printer.Fprint(&buf, fset, node)
+	return buf.String()
+}
+
+func toHTML(v string) string {
+	var buf bytes.Buffer
+	doc.ToHTML(&buf, v, nil)
+	return buf.String()
 }
 
 func isPackage(dir string) bool {
@@ -117,45 +158,6 @@ func golist(dir string) (string, error) {
 		return "", fmt.Errorf("%s", string(out))
 	}
 	return strings.TrimSpace(string(out)), nil
-}
-
-func printHTML(fset *token.FileSet, node interface{}) string {
-	var buf bytes.Buffer
-	printer.Fprint(&buf, fset, node)
-	return buf.String()
-}
-
-func funcNames(funcs []*doc.Func) []string {
-	names := make([]string, len(funcs))
-	for i, f := range funcs {
-		names[i] = f.Name
-	}
-	return names
-}
-
-func addFunc(s *Element, fset *token.FileSet, funcs []*doc.Func) {
-	for _, f := range funcs {
-		fn := printHTML(fset, f.Decl)
-		var class interface{}
-		var p interface{}
-		if f.Doc == "" {
-			//class = Class("empty")
-		} else {
-			p = P(toHTML(f.Doc))
-		}
-		s.With(
-			Section(Class("func"),
-				H2(fn, class),
-				p,
-			),
-		)
-	}
-}
-
-func toHTML(v string) string {
-	var buf bytes.Buffer
-	doc.ToHTML(&buf, v, nil)
-	return buf.String()
 }
 
 func mustParse(fset *token.FileSet, filename, src string) *ast.File {

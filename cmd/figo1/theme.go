@@ -43,10 +43,34 @@ func theme() *CSS {
 		gopherblue,
 	)
 	css.Style("h3",
-		"font-size: 1em",
+		"font-size: 1.25em",
+		"line-height: 1.25",
+		gopherblue,
 	)
 	css.Style("dl",
 		"margin: 1.25rem",
 	)
+	css.Style("pre",
+		"background: #EFEFEF",
+		"padding: 0.625rem",
+		"border-radius: 0.3125rem",
+		"margin: 1.25rem",
+	)
+	css.Style("code",
+		"font-family: Menlo, monospace",
+		"font-size: 0.875rem",
+	)
+	css.Style("p",
+		"margin: 1.25rem",
+	)
+	css.Style("a",
+		gopherblue,
+		"text-decoration: none",
+	)
+	css.Style("a:hover",
+		gopherblue,
+		"text-decoration: underline",
+	)
+
 	return css
 }
