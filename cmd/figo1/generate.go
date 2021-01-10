@@ -21,11 +21,12 @@ import (
 
 // Generate go documentation for the given directory and its children.
 func Generate(dir string) (p *Page, err error) {
-	if !isPackage(dir) {
+	pkg, err := golist(dir)
+	if err != nil || pkg == "" {
 		return nil, fmt.Errorf("%v: not a package", dir)
 	}
 
-	docs, err := godoc(dir)
+	docs, err := godoc(pkg, dir)
 	if err != nil {
 		return nil, err
 	}
@@ -45,14 +46,9 @@ func Generate(dir string) (p *Page, err error) {
 	return
 }
 
-func godoc(dir string) (*Element, error) {
+func godoc(pkg, dir string) (*Element, error) {
 	w := Article()
-	pkgName, err := golist(dir)
-	if err != nil {
-		return nil, err
-	}
-
-	s, err := docPkg(pkgName, dir)
+	s, err := docPkg(pkg, dir)
 	if err != nil {
 		return nil, err
 	}
@@ -180,6 +176,8 @@ func docPkg(pkgName, dir string) (*Element, error) {
 	}
 	return s, nil
 }
+
+// ----------------------------------------
 
 func genFuncLink(fset *token.FileSet, f *doc.Func) interface{} {
 	if f.Doc == "" {
