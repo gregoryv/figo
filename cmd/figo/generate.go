@@ -46,17 +46,7 @@ func Generate(dir string) (p *Page, err error) {
 	return
 }
 
-func godoc(pkg, dir string) (*Element, error) {
-	w := Article()
-	s, err := docPkg(pkg, dir)
-	if err != nil {
-		return nil, err
-	}
-	w.With(s)
-	return w, nil
-}
-
-func docPkg(pkgName, dir string) (*Element, error) {
+func godoc(pkgName, dir string) (*Element, error) {
 	// Parse files
 	files := make([]*ast.File, 0)
 	fset := token.NewFileSet()
@@ -71,7 +61,7 @@ func docPkg(pkgName, dir string) (*Element, error) {
 	}
 	// Build section
 	pkgExamplesSection := Span()
-	s := Section(
+	s := Article(
 		H1("Package ", path.Base(pkgName)),
 		Dl(
 			Dd(`import "`, pkgName, `"`),

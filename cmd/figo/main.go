@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/gregoryv/cmdline"
+	"github.com/gregoryv/nexus"
 	"github.com/gregoryv/wolf"
 )
 
@@ -18,7 +19,6 @@ func run(cmd wolf.Command) int {
 	var (
 		cli  = cmdline.NewParser(cmd.Args()...)
 		help = cli.Flag("-h, --help")
-		dir  = "."
 	)
 
 	switch {
@@ -27,11 +27,15 @@ func run(cmd wolf.Command) int {
 		return cmd.Stop(1)
 
 	case help:
-		cli.WriteUsageTo(cmd.Stderr())
+		p, _ := nexus.NewPrinter(cmd.Stderr())
+		p.Println(
+			cmd.Args()[0], "- generates go documentation of the current working directory to stdout.",
+		)
+		p.Println("Written by Gregory Vincic <g@7de.se>")
 		return cmd.Stop(0)
 	}
 
-	page, err := Generate(dir)
+	page, err := Generate(".")
 	if err != nil {
 		fmt.Fprintln(cmd.Stderr(), err)
 		return cmd.Stop(1)

@@ -8,7 +8,7 @@ require (
 	github.com/gregoryv/cmdline v0.4.3-0.20210109061339-714acb458dbe
 	github.com/gregoryv/gocyclo v0.1.0 // indirect
 	github.com/gregoryv/golden v0.6.0 // indirect
-	github.com/gregoryv/nexus v0.4.0 // indirect
+	github.com/gregoryv/nexus v0.4.0
 	github.com/gregoryv/qual v0.4.0 // indirect
 	github.com/gregoryv/web v0.14.0
 	github.com/gregoryv/wolf v0.6.0
