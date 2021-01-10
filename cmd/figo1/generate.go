@@ -74,6 +74,7 @@ func docPkg(pkgName, dir string) (*Element, error) {
 		return nil, err
 	}
 	// Build section
+	pkgExamplesSection := Span()
 	s := Section(
 		H1("Package ", path.Base(pkgName)),
 		Dl(
@@ -88,19 +89,47 @@ func docPkg(pkgName, dir string) (*Element, error) {
 			A(Name("pkg-overview")),
 			H2("Overview"),
 			toHTML(p.Doc),
+			// todo add package examples here
+			pkgExamplesSection,
 		),
 	)
+
 	// Generate index
 	dl := Dl()
-	examplesIndex := Section(H3("Examples"))
+	examplesIndex := Dl()
 	indexSection := Section(
 		A(Name("pkg-index")),
 		H2("Index"),
 		dl,
-		examplesIndex,
+		Section(
+			A(Name("pkg-examples")),
+			H3("Examples"),
+			examplesIndex,
+		),
 	)
 	docSection := Section(H2("Variables"))
 	s.With(indexSection, docSection)
+
+	// Examples index
+	for _, ex := range p.Examples {
+		name := ex.Name
+		id := ex.Name
+		if name == "" {
+			name = "Package"
+			id = "example_"
+		}
+		examplesIndex.With(Dd(
+			A(Href("#"+id), name),
+		))
+		pkgExamplesSection.With(
+			A(Name(id)),
+			A("Example"), Br(),
+			"Code:", Br(),
+			Pre(Code(printHTML(fset, ex.Code))),
+			"Output:", Br(),
+			Pre(Code(ex.Output)),
+		)
+	}
 
 	// Package funcs
 	for _, f := range p.Funcs {

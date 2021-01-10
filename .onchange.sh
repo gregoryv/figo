@@ -12,7 +12,7 @@ case $extension in
         ;;
 esac
 go test -coverprofile /tmp/c.out ./...
-uncover /tmp/c.out
+#uncover /tmp/c.out
 go install ./cmd/...
 
 cd /home/gregory/src/github.com/gregoryv/web && figo1 > /tmp/docs.html
