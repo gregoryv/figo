@@ -13,15 +13,6 @@ func theme() *CSS {
 		"padding-bottom: 1640px",
 		"font-family: sans-serif",
 	)
-	css.Style("li.h1",
-		"margin-top: 1.618em",
-	)
-	css.Style("li.h2",
-		"margin-left: 1.618em",
-	)
-	css.Style("section.func:last-child",
-		"margin-bottom: 3.618em",
-	)
 	css.Style("h1",
 		"font-size: 1.618em",
 		"border-bottom: 3px solid rgb(55, 94, 171)",
