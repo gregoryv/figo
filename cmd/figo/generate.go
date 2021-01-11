@@ -104,27 +104,11 @@ func godoc(pkgName, dir string) (*Element, error) {
 		)
 		// Constructors
 		for _, f := range t.Funcs {
-			index.With(
-				Dd("&nbsp;&nbsp;", genFuncLink(fset, f)),
-			)
-			docSection.With(
-				A(Name(f.Name)),
-				H3("func ", f.Name),
-				Pre(Code(printHTML(fset, f.Decl))),
-				P(template.HTMLEscapeString(f.Doc)),
-			)
+			documentFunc(index, docSection, fset, f)
 			addExample(examplesIndex, docSection, fset, f.Examples...)
 		}
 		for _, f := range t.Methods {
-			index.With(
-				Dd("&nbsp;&nbsp;", genFuncLink(fset, f)),
-			)
-			docSection.With(
-				A(Name(f.Name)),
-				H3("func ", f.Name),
-				Pre(Code(printHTML(fset, f.Decl))),
-				P(template.HTMLEscapeString(f.Doc)),
-			)
+			documentMethod(index, docSection, fset, f)
 			addExample(examplesIndex, docSection, fset, f.Examples...)
 		}
 		addExample(examplesIndex, pkgExamplesSection, fset, t.Examples...)
@@ -149,6 +133,30 @@ func godoc(pkgName, dir string) (*Element, error) {
 		docSection,
 	)
 	return s, nil
+}
+
+func documentFunc(index, section *Element, fset *token.FileSet, f *doc.Func) {
+	index.With(
+		Dd(genFuncLink(fset, f)),
+	)
+	section.With(
+		A(Name(f.Name)),
+		H3("func ", f.Name),
+		Pre(Code(printHTML(fset, f.Decl))),
+		P(template.HTMLEscapeString(f.Doc)),
+	)
+}
+
+func documentMethod(index, section *Element, fset *token.FileSet, f *doc.Func) {
+	index.With(
+		Dd(Class("method"), genFuncLink(fset, f)),
+	)
+	section.With(
+		A(Name(f.Name)),
+		H3("func ", f.Name),
+		Pre(Code(printHTML(fset, f.Decl))),
+		P(template.HTMLEscapeString(f.Doc)),
+	)
 }
 
 func addExample(index, section *Element, fset *token.FileSet, examples ...*doc.Example) {

@@ -48,13 +48,18 @@ func theme() *CSS {
 		gopherblue,
 	)
 	css.Style("h3",
-		"font-size: 1.25em",
+		"font-size: 1.25rem",
 		"line-height: 1.25",
 		gopherblue,
 	)
 	css.Style("dl",
-		"margin: 1.25rem",
+		"font-size: 0.875rem",
+		"line-height: 1.3",
 	)
+	css.Style("dd.method",
+		"padding-left: 1.25rem",
+	)
+
 	css.Style("pre",
 		"background: #EFEFEF",
 		"padding: 0.625rem",
