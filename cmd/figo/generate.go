@@ -58,9 +58,8 @@ func godoc(pkgName, dir string) (*Element, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Prepare sections
-	pkgExamplesSection := Span()
 
+	// Prepare sections
 	index := Dl()
 	examplesIndex := Dl()
 	indexSection := Section(
@@ -76,7 +75,8 @@ func godoc(pkgName, dir string) (*Element, error) {
 	docSection := Section(H2("Variables"))
 
 	// Examples index
-	addExample(examplesIndex, pkgExamplesSection, fset, p.Examples...)
+	pkgExamplesSection := Wrap()
+	docExample(examplesIndex, pkgExamplesSection, fset, p.Examples...)
 
 	// Package funcs
 	for _, f := range p.Funcs {
@@ -90,7 +90,7 @@ func godoc(pkgName, dir string) (*Element, error) {
 			Pre(printHTML(fset, f.Decl)),
 			P(template.HTMLEscapeString(f.Doc)),
 		)
-		addExample(examplesIndex, docSection, fset, f.Examples...)
+		docExample(examplesIndex, docSection, fset, f.Examples...)
 	}
 
 	// Types
@@ -104,14 +104,14 @@ func godoc(pkgName, dir string) (*Element, error) {
 		)
 		// Constructors
 		for _, f := range t.Funcs {
-			documentFunc(index, docSection, fset, f)
-			addExample(examplesIndex, docSection, fset, f.Examples...)
+			docFunc(index, docSection, fset, f)
+			docExample(examplesIndex, docSection, fset, f.Examples...)
 		}
 		for _, f := range t.Methods {
-			documentMethod(index, docSection, fset, f)
-			addExample(examplesIndex, docSection, fset, f.Examples...)
+			docMethod(index, docSection, fset, f)
+			docExample(examplesIndex, docSection, fset, f.Examples...)
 		}
-		addExample(examplesIndex, pkgExamplesSection, fset, t.Examples...)
+		docExample(examplesIndex, pkgExamplesSection, fset, t.Examples...)
 	}
 	s := Article(
 		H1("Package ", path.Base(pkgName)),
@@ -135,7 +135,7 @@ func godoc(pkgName, dir string) (*Element, error) {
 	return s, nil
 }
 
-func documentFunc(index, section *Element, fset *token.FileSet, f *doc.Func) {
+func docFunc(index, section *Element, fset *token.FileSet, f *doc.Func) {
 	index.With(
 		Dd(genFuncLink(fset, f)),
 	)
@@ -147,7 +147,7 @@ func documentFunc(index, section *Element, fset *token.FileSet, f *doc.Func) {
 	)
 }
 
-func documentMethod(index, section *Element, fset *token.FileSet, f *doc.Func) {
+func docMethod(index, section *Element, fset *token.FileSet, f *doc.Func) {
 	index.With(
 		Dd(Class("method"), genFuncLink(fset, f)),
 	)
@@ -159,7 +159,7 @@ func documentMethod(index, section *Element, fset *token.FileSet, f *doc.Func) {
 	)
 }
 
-func addExample(index, section *Element, fset *token.FileSet, examples ...*doc.Example) {
+func docExample(index, section *Element, fset *token.FileSet, examples ...*doc.Example) {
 	for _, ex := range examples {
 		name := ex.Name
 		id := ex.Name
