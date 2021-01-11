@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/gregoryv/cmdline"
 	"github.com/gregoryv/nexus"
@@ -29,9 +30,9 @@ func run(cmd wolf.Command) int {
 
 	case help:
 		p, _ := nexus.NewPrinter(cmd.Stderr())
-		p.Println(
-			cmd.Args()[0], "- generates go documentation to HTML",
-		)
+		p.Println(cmd.Args()[0], "- generates go documentation to HTML")
+		p.Println()
+		p.Println("If BROWSER is set, the generated file is automatically opened.")
 		cli.WriteUsageTo(p)
 
 	case writeToStdout:
@@ -59,6 +60,10 @@ func run(cmd wolf.Command) int {
 		_, err = page.WriteTo(fh)
 		if err != nil {
 			return fail(cmd, err, 1)
+		}
+		browser := cmd.Getenv("BROWSER")
+		if browser != "" {
+			exec.Command(browser, filename).Run()
 		}
 		fmt.Println(filename)
 	}

@@ -20,8 +20,13 @@ func theme() *CSS {
 		"background-color: #E0EBF5",
 		"font-size: 1.25rem",
 		"padding-left: 1.313rem",
+		"padding-right: 1.313rem",
 		"padding-top: 1.313rem",
 		"height: 2.4rem",
+	)
+	css.Style("span.right",
+		"float: right",
+		"font-style: italic",
 	)
 	css.Style("article",
 		"padding: 1.313rem 1.313rem",
