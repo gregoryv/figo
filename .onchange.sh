@@ -12,8 +12,8 @@ case $extension in
         ;;
 esac
 go test -coverprofile /tmp/c.out ./...
-#uncover /tmp/c.out
+uncover /tmp/c.out
 go install ./cmd/...
 
 unset BROWSER
-cd /home/gregory/src/github.com/gregoryv/web && figo > /tmp/docs.html
+cd ~/dl/go1/go/src/net/http/ && figo

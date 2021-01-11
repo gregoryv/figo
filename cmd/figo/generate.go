@@ -9,7 +9,6 @@ import (
 	"go/printer"
 	"go/token"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -61,24 +60,6 @@ func godoc(pkgName, dir string) (*Element, error) {
 	}
 	// Build section
 	pkgExamplesSection := Span()
-	s := Article(
-		H1("Package ", path.Base(pkgName)),
-		Dl(
-			Dd(`import "`, pkgName, `"`),
-		),
-		Dl(
-			Dd(A(Href("#pkg-overview"), "Overview")),
-			Dd(A(Href("#pkg-index"), "Index")),
-			Dd(A(Href("#pkg-examples"), "Examples")),
-		),
-		Section(
-			A(Name("pkg-overview")),
-			H2("Overview"),
-			toHTML(p.Doc),
-			// todo add package examples here
-			pkgExamplesSection,
-		),
-	)
 
 	// Generate index
 	dl := Dl()
@@ -94,7 +75,6 @@ func godoc(pkgName, dir string) (*Element, error) {
 		),
 	)
 	docSection := Section(H2("Variables"))
-	s.With(indexSection, docSection)
 
 	// Examples index
 	for _, ex := range p.Examples {
@@ -164,6 +144,26 @@ func godoc(pkgName, dir string) (*Element, error) {
 			)
 		}
 	}
+	s := Article(
+		H1("Package ", path.Base(pkgName)),
+		Dl(
+			Dd(`import "`, pkgName, `"`),
+		),
+		Dl(
+			Dd(A(Href("#pkg-overview"), "Overview")),
+			Dd(A(Href("#pkg-index"), "Index")),
+			Dd(A(Href("#pkg-examples"), "Examples")),
+		),
+		Section(
+			A(Name("pkg-overview")),
+			H2("Overview"),
+			toHTML(p.Doc),
+			// todo add package examples here
+			pkgExamplesSection,
+		),
+		indexSection,
+		docSection,
+	)
 	return s, nil
 }
 
@@ -176,10 +176,6 @@ func genFuncLink(fset *token.FileSet, f *doc.Func) interface{} {
 	return A(Href("#"+f.Name), printHTML(fset, f.Decl))
 }
 
-func genTypeLink(fset *token.FileSet, t *doc.Type) interface{} {
-	return A(Href("#"+t.Name), t.Name)
-}
-
 func printHTML(fset *token.FileSet, node interface{}) string {
 	var buf bytes.Buffer
 	printer.Fprint(&buf, fset, node)
@@ -190,11 +186,6 @@ func toHTML(v string) string {
 	var buf bytes.Buffer
 	doc.ToHTML(&buf, v, nil)
 	return buf.String()
-}
-
-func isPackage(dir string) bool {
-	name, err := golist(dir)
-	return err == nil && name != ""
 }
 
 func golist(dir string) (string, error) {
@@ -211,14 +202,4 @@ func mustParse(fset *token.FileSet, filename, src string) *ast.File {
 		panic(err)
 	}
 	return f
-}
-
-func skipPath(info os.FileInfo) bool {
-	switch {
-	case info.IsDir() && info.Name() == ".git":
-	case strings.Contains(info.Name(), "~"):
-	default:
-		return false
-	}
-	return true
 }
