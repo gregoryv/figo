@@ -81,6 +81,5 @@ func theme() *CSS {
 		gopherblue,
 		"text-decoration: underline",
 	)
-
 	return css
 }

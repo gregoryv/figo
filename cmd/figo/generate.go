@@ -99,7 +99,7 @@ func godoc(pkgName, dir string) (*Element, error) {
 		docSection.With(
 			A(Name(t.Name)),
 			H2("type ", t.Name),
-			P(template.HTMLEscapeString(t.Doc)),
+			toHTML(t.Doc),
 			Pre(Code(printHTML(fset, t.Decl))),
 		)
 		// Constructors
@@ -204,7 +204,7 @@ func printHTML(fset *token.FileSet, node interface{}) string {
 
 func toHTML(v string) string {
 	var buf bytes.Buffer
-	doc.ToHTML(&buf, v, nil)
+	doc.ToHTML(&buf, template.HTMLEscapeString(v), nil)
 	return buf.String()
 }
 
