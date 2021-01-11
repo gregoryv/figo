@@ -31,7 +31,6 @@ func run(cmd wolf.Command) int {
 		p.Println(
 			cmd.Args()[0], "- generates go documentation of the current working directory to stdout.",
 		)
-		p.Println("Written by Gregory Vincic <g@7de.se>")
 		return cmd.Stop(0)
 	}
 
