@@ -76,9 +76,7 @@ func godoc(pkgName, dir string) (*Element, error) {
 	docSection := Section(H2("Variables"))
 
 	// Examples index
-	for _, ex := range p.Examples {
-		addExample(examplesIndex, pkgExamplesSection, ex, fset)
-	}
+	addExample(examplesIndex, pkgExamplesSection, fset, p.Examples...)
 
 	// Package funcs
 	for _, f := range p.Funcs {
@@ -92,6 +90,7 @@ func godoc(pkgName, dir string) (*Element, error) {
 			Pre(printHTML(fset, f.Decl)),
 			P(template.HTMLEscapeString(f.Doc)),
 		)
+		addExample(examplesIndex, docSection, fset, f.Examples...)
 	}
 
 	// Types
@@ -114,6 +113,7 @@ func godoc(pkgName, dir string) (*Element, error) {
 				Pre(Code(printHTML(fset, f.Decl))),
 				P(template.HTMLEscapeString(f.Doc)),
 			)
+			addExample(examplesIndex, docSection, fset, f.Examples...)
 		}
 		for _, f := range t.Methods {
 			index.With(
@@ -125,10 +125,9 @@ func godoc(pkgName, dir string) (*Element, error) {
 				Pre(Code(printHTML(fset, f.Decl))),
 				P(template.HTMLEscapeString(f.Doc)),
 			)
+			addExample(examplesIndex, docSection, fset, f.Examples...)
 		}
-		for _, ex := range t.Examples {
-			addExample(examplesIndex, pkgExamplesSection, ex, fset)
-		}
+		addExample(examplesIndex, pkgExamplesSection, fset, t.Examples...)
 	}
 	s := Article(
 		H1("Package ", path.Base(pkgName)),
@@ -152,30 +151,32 @@ func godoc(pkgName, dir string) (*Element, error) {
 	return s, nil
 }
 
-func addExample(index, section *Element, ex *doc.Example, fset *token.FileSet) {
-	name := ex.Name
-	id := ex.Name
-	if name == "" {
-		name = "Package"
-		id = "example_"
-	}
-	index.With(Dd(
-		A(Href("#"+id), name),
-	))
-	var output interface{}
-	if ex.Output != "" {
-		output = Wrap("Output:", Br(),
-			Pre(Code(ex.Output)),
+func addExample(index, section *Element, fset *token.FileSet, examples ...*doc.Example) {
+	for _, ex := range examples {
+		name := ex.Name
+		id := ex.Name
+		if name == "" {
+			name = "Package"
+			id = "example_"
+		}
+		index.With(Dd(
+			A(Href("#"+id), name),
+		))
+		var output interface{}
+		if ex.Output != "" {
+			output = Wrap("Output:", Br(),
+				Pre(Code(ex.Output)),
+			)
+		}
+
+		section.With(
+			A(Name(id)),
+			A("Example"), Br(),
+			"Code:", Br(),
+			Pre(Code(printHTML(fset, ex.Code))),
+			output,
 		)
 	}
-
-	section.With(
-		A(Name(id)),
-		A("Example"), Br(),
-		"Code:", Br(),
-		Pre(Code(printHTML(fset, ex.Code))),
-		output,
-	)
 }
 
 // ----------------------------------------
