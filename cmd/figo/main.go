@@ -19,27 +19,53 @@ func run(cmd wolf.Command) int {
 	var (
 		cli  = cmdline.NewParser(cmd.Args()...)
 		help = cli.Flag("-h, --help")
+
+		writeToStdout = cli.Flag("-w, --write-to-stdout")
 	)
 
 	switch {
 	case !cli.Ok():
-		fmt.Fprintln(cmd.Stderr(), cli.Error())
-		return cmd.Stop(1)
+		return fail(cmd, cli.Error(), 1)
 
 	case help:
 		p, _ := nexus.NewPrinter(cmd.Stderr())
 		p.Println(
-			cmd.Args()[0], "- generates go documentation of the current working directory to stdout.",
+			cmd.Args()[0], "- generates go documentation to HTML",
 		)
-		return cmd.Stop(0)
-	}
+		cli.WriteUsageTo(p)
 
-	page, err := Generate(".")
-	if err != nil {
-		fmt.Fprintln(cmd.Stderr(), err)
-		return cmd.Stop(1)
-	}
+	case writeToStdout:
+		page, err := Generate(".")
+		if err != nil {
+			return fail(cmd, err, 1)
+		}
+		page.WriteTo(cmd.Stdout())
 
-	page.WriteTo(cmd.Stdout())
+	default:
+		// Create output file
+		tmp := os.TempDir()
+		filename := tmp + "/figo.html"
+		fh, err := os.Create(filename)
+		if err != nil {
+			return fail(cmd, err, 1)
+		}
+		defer fh.Close()
+
+		page, err := Generate(".")
+		if err != nil {
+			return fail(cmd, err, 1)
+		}
+
+		_, err = page.WriteTo(fh)
+		if err != nil {
+			return fail(cmd, err, 1)
+		}
+		fmt.Println(filename)
+	}
 	return cmd.Stop(0)
+}
+
+func fail(cmd wolf.Command, err error, exitCode int) int {
+	fmt.Fprintln(cmd.Stderr(), err)
+	return cmd.Stop(exitCode)
 }
