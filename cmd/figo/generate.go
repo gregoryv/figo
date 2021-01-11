@@ -58,16 +58,15 @@ func godoc(pkgName, dir string) (*Element, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Build section
+	// Prepare sections
 	pkgExamplesSection := Span()
 
-	// Generate index
-	dl := Dl()
+	index := Dl()
 	examplesIndex := Dl()
 	indexSection := Section(
 		A(Name("pkg-index")),
 		H2("Index"),
-		dl,
+		index,
 		Section(
 			A(Name("pkg-examples")),
 			H3("Examples"),
@@ -78,29 +77,13 @@ func godoc(pkgName, dir string) (*Element, error) {
 
 	// Examples index
 	for _, ex := range p.Examples {
-		name := ex.Name
-		id := ex.Name
-		if name == "" {
-			name = "Package"
-			id = "example_"
-		}
-		examplesIndex.With(Dd(
-			A(Href("#"+id), name),
-		))
-		pkgExamplesSection.With(
-			A(Name(id)),
-			A("Example"), Br(),
-			"Code:", Br(),
-			Pre(Code(printHTML(fset, ex.Code))),
-			"Output:", Br(),
-			Pre(Code(ex.Output)),
-		)
+		addExample(examplesIndex, pkgExamplesSection, ex, fset)
 	}
 
 	// Package funcs
 	for _, f := range p.Funcs {
 		lnk := genFuncLink(fset, f)
-		dl.With(
+		index.With(
 			Dd(lnk),
 		)
 		docSection.With(
@@ -113,16 +96,16 @@ func godoc(pkgName, dir string) (*Element, error) {
 
 	// Types
 	for _, t := range p.Types {
-		dl.With(Dd(A(Href("#"+t.Name), "type ", t.Name)))
+		index.With(Dd(A(Href("#"+t.Name), "type ", t.Name)))
 		docSection.With(
 			A(Name(t.Name)),
 			H2("type ", t.Name),
 			P(template.HTMLEscapeString(t.Doc)),
 			Pre(Code(printHTML(fset, t.Decl))),
 		)
-
+		// Constructors
 		for _, f := range t.Funcs {
-			dl.With(
+			index.With(
 				Dd("&nbsp;&nbsp;", genFuncLink(fset, f)),
 			)
 			docSection.With(
@@ -133,7 +116,7 @@ func godoc(pkgName, dir string) (*Element, error) {
 			)
 		}
 		for _, f := range t.Methods {
-			dl.With(
+			index.With(
 				Dd("&nbsp;&nbsp;", genFuncLink(fset, f)),
 			)
 			docSection.With(
@@ -142,6 +125,9 @@ func godoc(pkgName, dir string) (*Element, error) {
 				Pre(Code(printHTML(fset, f.Decl))),
 				P(template.HTMLEscapeString(f.Doc)),
 			)
+		}
+		for _, ex := range t.Examples {
+			addExample(examplesIndex, pkgExamplesSection, ex, fset)
 		}
 	}
 	s := Article(
@@ -158,13 +144,38 @@ func godoc(pkgName, dir string) (*Element, error) {
 			A(Name("pkg-overview")),
 			H2("Overview"),
 			toHTML(p.Doc),
-			// todo add package examples here
 			pkgExamplesSection,
 		),
 		indexSection,
 		docSection,
 	)
 	return s, nil
+}
+
+func addExample(index, section *Element, ex *doc.Example, fset *token.FileSet) {
+	name := ex.Name
+	id := ex.Name
+	if name == "" {
+		name = "Package"
+		id = "example_"
+	}
+	index.With(Dd(
+		A(Href("#"+id), name),
+	))
+	var output interface{}
+	if ex.Output != "" {
+		output = Wrap("Output:", Br(),
+			Pre(Code(ex.Output)),
+		)
+	}
+
+	section.With(
+		A(Name(id)),
+		A("Example"), Br(),
+		"Code:", Br(),
+		Pre(Code(printHTML(fset, ex.Code))),
+		output,
+	)
 }
 
 // ----------------------------------------
