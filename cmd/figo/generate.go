@@ -8,10 +8,8 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
-	"io/ioutil"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -20,15 +18,7 @@ import (
 )
 
 // Generate go documentation for the given directory and its children.
-func Generate(dir string) (page *Page, err error) {
-	pkg, err := golist(dir)
-	if err != nil || pkg == "" {
-		return nil, fmt.Errorf("%v: not a package", dir)
-	}
-	fset, p, err := parseFiles(pkg, dir)
-	if err != nil {
-		return nil, err
-	}
+func Generate(pkg string, p *doc.Package, fset *token.FileSet) (page *Page, err error) {
 	docs, err := godoc(p, fset)
 	if err != nil {
 		return nil, err
@@ -58,25 +48,6 @@ func Generate(dir string) (page *Page, err error) {
 		)),
 	)
 	return
-}
-
-func parseFiles(pkgName, dir string) (*token.FileSet, *doc.Package, error) {
-	// Parse files
-	files := make([]*ast.File, 0)
-	fset := token.NewFileSet()
-	gofiles, _ := filepath.Glob(dir + "/*.go")
-	for _, f := range gofiles {
-		if strings.Contains(f, "_test.go") {
-			continue
-		}
-		data, _ := ioutil.ReadFile(f)
-		if bytes.Contains(data, []byte("+build ignore")) {
-			continue
-		}
-		files = append(files, mustParse(fset, f, string(data)))
-	}
-	p, err := doc.NewFromFiles(fset, files, pkgName)
-	return fset, p, err
 }
 
 func godoc(p *doc.Package, fset *token.FileSet) (*Element, error) {

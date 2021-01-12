@@ -1,9 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"go/ast"
+	"go/doc"
+	"go/token"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/gregoryv/cmdline"
 	"github.com/gregoryv/nexus"
@@ -34,9 +41,23 @@ func run(cmd wolf.Command) int {
 		p.Println()
 		p.Println("If BROWSER is set, the generated file is automatically opened.")
 		cli.WriteUsageTo(p)
+		return cmd.Stop(0)
+	}
 
+	// Must be a go package
+	dir := "."
+	pkg, err := golist(dir)
+	if err != nil || pkg == "" {
+		return fail(cmd, err, 1)
+	}
+	fset, p, err := parseFiles(pkg, dir)
+	if err != nil {
+		return fail(cmd, err, 1)
+	}
+
+	switch {
 	case writeToStdout:
-		page, err := Generate(".")
+		page, err := Generate(pkg, p, fset)
 		if err != nil {
 			return fail(cmd, err, 1)
 		}
@@ -52,7 +73,7 @@ func run(cmd wolf.Command) int {
 		}
 		defer fh.Close()
 
-		page, err := Generate(".")
+		page, err := Generate(pkg, p, fset)
 		if err != nil {
 			return fail(cmd, err, 1)
 		}
@@ -68,6 +89,25 @@ func run(cmd wolf.Command) int {
 		fmt.Println(filename)
 	}
 	return cmd.Stop(0)
+}
+
+func parseFiles(pkgName, dir string) (*token.FileSet, *doc.Package, error) {
+	// Parse files
+	files := make([]*ast.File, 0)
+	fset := token.NewFileSet()
+	gofiles, _ := filepath.Glob(dir + "/*.go")
+	for _, f := range gofiles {
+		if strings.Contains(f, "_test.go") {
+			continue
+		}
+		data, _ := ioutil.ReadFile(f)
+		if bytes.Contains(data, []byte("+build ignore")) {
+			continue
+		}
+		files = append(files, mustParse(fset, f, string(data)))
+	}
+	p, err := doc.NewFromFiles(fset, files, pkgName)
+	return fset, p, err
 }
 
 func fail(cmd wolf.Command, err error, exitCode int) int {
