@@ -19,10 +19,6 @@ import (
 
 // Generate go documentation for the given directory and its children.
 func Generate(pkg string, p *doc.Package, fset *token.FileSet) (page *Page, err error) {
-	docs, err := godoc(p, fset)
-	if err != nil {
-		return nil, err
-	}
 	stamp := time.Now().Format("2006-01-02 15:04:05")
 	page = NewPage(Html(
 		Head(
@@ -44,7 +40,7 @@ func Generate(pkg string, p *doc.Package, fset *token.FileSet) (page *Page, err 
 					Dd(A(Href("#pkg-examples"), "Examples")),
 				),
 				overview(p, fset),
-				docs,
+				godoc(p, fset),
 			),
 		)),
 	)
@@ -60,7 +56,7 @@ func overview(p *doc.Package, fset *token.FileSet) *Element {
 	return s
 }
 
-func godoc(p *doc.Package, fset *token.FileSet) (*Element, error) {
+func godoc(p *doc.Package, fset *token.FileSet) *Element {
 	// Prepare sections
 	index := Dl()
 	examplesIndex := Dl()
@@ -119,7 +115,7 @@ func godoc(p *doc.Package, fset *token.FileSet) (*Element, error) {
 		indexSection,
 		docSection,
 	)
-	return s, nil
+	return s
 }
 
 func docFunc(index, section *Element, fset *token.FileSet, f *doc.Func) {
@@ -191,7 +187,7 @@ func printHTML(fset *token.FileSet, node interface{}) string {
 
 func toHTML(v string) string {
 	var buf bytes.Buffer
-	doc.ToHTML(&buf, template.HTMLEscapeString(v), nil)
+	doc.ToHTML(&buf, v, nil)
 	return buf.String()
 }
 
