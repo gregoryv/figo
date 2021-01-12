@@ -45,16 +45,27 @@ func Generate(dir string) (p *Page, err error) {
 	return
 }
 
-func godoc(pkgName, dir string) (*Element, error) {
+func parseFiles(pkgName, dir string) (*token.FileSet, *doc.Package, error) {
 	// Parse files
 	files := make([]*ast.File, 0)
 	fset := token.NewFileSet()
 	gofiles, _ := filepath.Glob(dir + "/*.go")
 	for _, f := range gofiles {
+		if strings.Contains(f, "_test.go") {
+			continue
+		}
 		data, _ := ioutil.ReadFile(f)
+		if bytes.Contains(data, []byte("+build ignore")) {
+			continue
+		}
 		files = append(files, mustParse(fset, f, string(data)))
 	}
 	p, err := doc.NewFromFiles(fset, files, pkgName)
+	return fset, p, err
+}
+
+func godoc(pkgName, dir string) (*Element, error) {
+	fset, p, err := parseFiles(pkgName, dir)
 	if err != nil {
 		return nil, err
 	}
@@ -80,14 +91,13 @@ func godoc(pkgName, dir string) (*Element, error) {
 
 	// Package funcs
 	for _, f := range p.Funcs {
-		lnk := genFuncLink(fset, f)
 		index.With(
-			Dd(lnk),
+			Dd(genFuncLink(fset, f)),
 		)
 		docSection.With(
 			A(Name(f.Name)),
 			H3("func ", f.Name),
-			Pre(printHTML(fset, f.Decl)),
+			Pre(Code(printHTML(fset, f.Decl))),
 			P(template.HTMLEscapeString(f.Doc)),
 		)
 		docExample(examplesIndex, docSection, fset, f.Examples...)
