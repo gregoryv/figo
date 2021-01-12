@@ -43,11 +43,21 @@ func Generate(pkg string, p *doc.Package, fset *token.FileSet) (page *Page, err 
 					Dd(A(Href("#pkg-index"), "Index")),
 					Dd(A(Href("#pkg-examples"), "Examples")),
 				),
+				overview(p, fset),
 				docs,
 			),
 		)),
 	)
 	return
+}
+
+func overview(p *doc.Package, fset *token.FileSet) *Element {
+	s := Section(
+		A(Name("pkg-overview")),
+		H2("Overview"),
+		toHTML(p.Doc),
+	)
+	return s
 }
 
 func godoc(p *doc.Package, fset *token.FileSet) (*Element, error) {
@@ -93,6 +103,7 @@ func godoc(p *doc.Package, fset *token.FileSet) (*Element, error) {
 			toHTML(t.Doc),
 			Pre(Code(printHTML(fset, t.Decl))),
 		)
+		docExample(examplesIndex, docSection, fset, t.Examples...)
 		// Constructors
 		for _, f := range t.Funcs {
 			docFunc(index, docSection, fset, f)
@@ -102,15 +113,9 @@ func godoc(p *doc.Package, fset *token.FileSet) (*Element, error) {
 			docMethod(index, docSection, fset, f)
 			docExample(examplesIndex, docSection, fset, f.Examples...)
 		}
-		docExample(examplesIndex, pkgExamplesSection, fset, t.Examples...)
+
 	}
 	s := Wrap(
-		Section(
-			A(Name("pkg-overview")),
-			H2("Overview"),
-			toHTML(p.Doc),
-			pkgExamplesSection,
-		),
 		indexSection,
 		docSection,
 	)
