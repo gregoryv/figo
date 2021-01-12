@@ -39,101 +39,67 @@ func Generate(pkg string, p *doc.Package, fset *token.FileSet) (page *Page, err 
 					Dd(A(Href("#pkg-index"), "Index")),
 					Dd(A(Href("#pkg-examples"), "Examples")),
 				),
-				overview(p, fset),
-				godoc(p, fset),
+				Section(
+					A(Name("pkg-overview")),
+					H2("Overview"),
+					toHTML(p.Doc),
+				),
+				index(p, fset),
+				docs(p, fset),
 			),
 		)),
 	)
 	return
 }
 
-func overview(p *doc.Package, fset *token.FileSet) *Element {
-	s := Section(
-		A(Name("pkg-overview")),
-		H2("Overview"),
-		toHTML(p.Doc),
+func index(p *doc.Package, fset *token.FileSet) *Element {
+	index := Dl(
+		funcLinks(fset, p.Funcs...),
 	)
-	return s
-}
 
-func godoc(p *doc.Package, fset *token.FileSet) *Element {
-	// Prepare sections
-	index := Dl()
-	examplesIndex := Dl()
-	indexSection := Section(
+	for _, t := range p.Types {
+		index.With(Dd(A(Href("#"+t.Name), "type ", t.Name)))
+		index.With(funcLinks(fset, t.Funcs...)) // Constructors
+		for _, f := range t.Methods {
+			index.With(Dd(Class("method"), genFuncLink(fset, f)))
+		}
+	}
+
+	return Section(
 		A(Name("pkg-index")),
 		H2("Index"),
 		index,
-		Section(
-			A(Name("pkg-examples")),
-			H3("Examples"),
-			examplesIndex,
-		),
 	)
-	docSection := Section(H2("Variables"))
+}
 
-	// Examples index
-	pkgExamplesSection := Wrap()
-	docExample(examplesIndex, pkgExamplesSection, fset, p.Examples...)
+func docs(p *doc.Package, fset *token.FileSet) *Element {
+	section := Section()
 
 	// Package funcs
 	for _, f := range p.Funcs {
-		index.With(
-			Dd(genFuncLink(fset, f)),
-		)
-		docSection.With(
-			A(Name(f.Name)),
-			H3("func ", f.Name),
-			Pre(Code(printHTML(fset, f.Decl))),
-			P(template.HTMLEscapeString(f.Doc)),
-		)
-		docExample(examplesIndex, docSection, fset, f.Examples...)
+		docFunc(section, fset, f)
 	}
 
 	// Types
 	for _, t := range p.Types {
-		index.With(Dd(A(Href("#"+t.Name), "type ", t.Name)))
-		docSection.With(
+		section.With(
 			A(Name(t.Name)),
 			H2("type ", t.Name),
 			toHTML(t.Doc),
 			Pre(Code(printHTML(fset, t.Decl))),
 		)
-		docExample(examplesIndex, docSection, fset, t.Examples...)
 		// Constructors
 		for _, f := range t.Funcs {
-			docFunc(index, docSection, fset, f)
-			docExample(examplesIndex, docSection, fset, f.Examples...)
+			docFunc(section, fset, f)
 		}
 		for _, f := range t.Methods {
-			docMethod(index, docSection, fset, f)
-			docExample(examplesIndex, docSection, fset, f.Examples...)
+			docFunc(section, fset, f)
 		}
-
 	}
-	s := Wrap(
-		indexSection,
-		docSection,
-	)
-	return s
+	return section
 }
 
-func docFunc(index, section *Element, fset *token.FileSet, f *doc.Func) {
-	index.With(
-		Dd(genFuncLink(fset, f)),
-	)
-	section.With(
-		A(Name(f.Name)),
-		H3("func ", f.Name),
-		Pre(Code(printHTML(fset, f.Decl))),
-		P(template.HTMLEscapeString(f.Doc)),
-	)
-}
-
-func docMethod(index, section *Element, fset *token.FileSet, f *doc.Func) {
-	index.With(
-		Dd(Class("method"), genFuncLink(fset, f)),
-	)
+func docFunc(section *Element, fset *token.FileSet, f *doc.Func) {
 	section.With(
 		A(Name(f.Name)),
 		H3("func ", f.Name),
@@ -171,6 +137,14 @@ func docExample(index, section *Element, fset *token.FileSet, examples ...*doc.E
 }
 
 // ----------------------------------------
+
+func funcLinks(fset *token.FileSet, funcs ...*doc.Func) *Element {
+	el := Wrap()
+	for _, f := range funcs {
+		el.With(Dd(genFuncLink(fset, f)))
+	}
+	return el
+}
 
 func genFuncLink(fset *token.FileSet, f *doc.Func) interface{} {
 	if f.Doc == "" {
