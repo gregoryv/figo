@@ -8,12 +8,10 @@ import (
 )
 
 func Test_default_behaviour(t *testing.T) {
-	orig, _ := os.Getwd()
 	cmd := wolf.NewTCmd("figo")
 	defer cmd.Cleanup()
-	defer os.RemoveAll("docs.html")
 
-	os.Chdir(orig)
+	os.Chdir("/home/gregory/dl/go1/go/src/net/http")
 	code := run(cmd)
 	if code != 0 {
 		t.Fail()
