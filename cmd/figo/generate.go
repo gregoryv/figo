@@ -23,7 +23,6 @@ func Generate(name string, pkg *doc.Package, fset *token.FileSet) (page *Page, e
 		Head(
 			Meta(Charset("utf-8")),
 			Meta(Name("viewport"), Content("width=device-width, initial-scale=1")),
-			Meta(Name("theme-color"), Content("#375EAB")),
 			Style(theme()),
 		),
 		Body(
