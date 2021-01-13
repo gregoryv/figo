@@ -10,6 +10,7 @@ import (
 	"go/token"
 	"os/exec"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
@@ -44,6 +45,7 @@ func Generate(name string, pkg *doc.Package, fset *token.FileSet) (page *Page, e
 					A(Name("pkg-overview")),
 					H2("Overview"),
 					toHTML(pkg.Doc),
+					docExamples(fset, pkg.Examples...),
 				),
 				Section(
 					A(Name("pkg-index")),
@@ -52,9 +54,8 @@ func Generate(name string, pkg *doc.Package, fset *token.FileSet) (page *Page, e
 
 					A(Name("pkg-examples")),
 					H3("Examples"),
-					Dl(
-						examples(pkg, fset),
-					),
+					examples(pkg, fset),
+
 					H3("Package files"),
 				),
 				Section(
@@ -64,6 +65,21 @@ func Generate(name string, pkg *doc.Package, fset *token.FileSet) (page *Page, e
 		)),
 	)
 	return
+}
+
+func examples(pkg *doc.Package, fset *token.FileSet) *Element {
+	dl := Dl()
+	for _, ex := range allExamples(pkg, fset) {
+		dl.With(
+			Dd(
+				A(
+					Href("#"+exampleId(ex)),
+					ex.Name,
+				),
+			),
+		)
+	}
+	return dl
 }
 
 func index(p *doc.Package, fset *token.FileSet) *Element {
@@ -84,36 +100,30 @@ func docs(p *doc.Package, fset *token.FileSet) *Element {
 	section := Wrap()
 	for _, f := range p.Funcs {
 		docFunc(section, fset, f)
+		section.With(docExamples(fset, f.Examples...))
 	}
-
 	for _, t := range p.Types {
 		section.With(
 			A(Name(t.Name)),
 			H2("type ", t.Name),
 			toHTML(t.Doc),
 			Pre(Code(printHTML(fset, t.Decl))),
+			docExamples(fset, t.Examples...),
 		)
 		// Constructors
 		for _, f := range t.Funcs {
 			docFunc(section, fset, f)
+			section.With(docExamples(fset, f.Examples...))
 		}
 		for _, f := range t.Methods {
 			docFunc(section, fset, f)
+			section.With(docExamples(fset, f.Examples...))
 		}
 	}
 	return section
 }
 
-func docFunc(section *Element, fset *token.FileSet, f *doc.Func) {
-	section.With(
-		A(Name(f.Name)),
-		H3("func ", f.Name),
-		Pre(Code(printHTML(fset, f.Decl))),
-		P(toHTML(f.Doc)),
-	)
-}
-
-func examples(pkg *doc.Package, fset *token.FileSet) *Element {
+func allExamples(pkg *doc.Package, fset *token.FileSet) []*doc.Example {
 	all := make([]*doc.Example, 0, len(pkg.Examples))
 	for _, ex := range pkg.Examples {
 		all = append(all, ex)
@@ -138,41 +148,51 @@ func examples(pkg *doc.Package, fset *token.FileSet) *Element {
 			}
 		}
 	}
-	dl := Dl()
-	for _, ex := range all {
-		id := ex.Name
-		name := ex.Name
-		dl.With(A(Href("#"+id), name))
-	}
-	return dl
+	sort.Sort(exampleByName(all))
+	return all
 }
 
-func docExample(index, section *Element, fset *token.FileSet, examples ...*doc.Example) {
+type exampleByName []*doc.Example
+
+func (a exampleByName) Len() int           { return len(a) }
+func (a exampleByName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a exampleByName) Less(i, j int) bool { return a[i].Name < a[j].Name }
+
+func docFunc(section *Element, fset *token.FileSet, f *doc.Func) {
+	section.With(
+		A(Name(f.Name)),
+		H3("func ", f.Name),
+		Pre(Code(printHTML(fset, f.Decl))),
+		P(toHTML(f.Doc)),
+	)
+}
+
+func docExamples(fset *token.FileSet, examples ...*doc.Example) *Element {
+	el := Wrap()
 	for _, ex := range examples {
-		name := ex.Name
-		id := ex.Name
-		if name == "" {
-			name = "Package"
-			id = "example_"
-		}
-		index.With(Dd(
-			A(Href("#"+id), name),
-		))
 		var output interface{}
 		if ex.Output != "" {
 			output = Wrap("Output:", Br(),
 				Pre(Code(ex.Output)),
 			)
 		}
-
-		section.With(
-			A(Name(id)),
-			A("Example"), Br(),
+		title := "Example"
+		if ex.Suffix != "" {
+			title = fmt.Sprintf("Example (%s)", strings.Title(ex.Suffix))
+		}
+		el.With(
+			A(Name(exampleId(ex))),
+			A(title), Br(),
 			"Code:", Br(),
 			Pre(Code(printHTML(fset, ex.Code))),
 			output,
 		)
 	}
+	return el
+}
+
+func exampleId(ex *doc.Example) string {
+	return "example_" + ex.Name + "_" + ex.Suffix
 }
 
 // ----------------------------------------

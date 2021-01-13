@@ -50,7 +50,7 @@ func run(cmd wolf.Command) int {
 	if err != nil || imp == "" {
 		return fail(cmd, err, 1)
 	}
-	fset, files := goFiles(dir, false)
+	fset, files := goFiles(dir, true)
 	pkg, err := doc.NewFromFiles(fset, files, imp)
 	if err != nil {
 		return fail(cmd, err, 1)
