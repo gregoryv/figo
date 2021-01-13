@@ -37,3 +37,14 @@ func Test_bad_flag(t *testing.T) {
 		t.Error(cmd.Dump())
 	}
 }
+
+func Test_write_to_stdout(t *testing.T) {
+	cmd := wolf.NewTCmd("figo", "-w")
+	defer cmd.Cleanup()
+
+	os.Chdir("/home/gregory/dl/go1/go/src/net/http")
+	code := run(cmd)
+	if code != 0 {
+		t.Fail()
+	}
+}
