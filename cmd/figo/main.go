@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/gregoryv/cmdline"
 	"github.com/gregoryv/nexus"
@@ -50,7 +49,7 @@ func run(cmd wolf.Command) int {
 	if err != nil || imp == "" {
 		return fail(cmd, err, 1)
 	}
-	fset, files := goFiles(dir, true)
+	fset, files := goFiles(dir)
 	pkg, err := doc.NewFromFiles(fset, files, imp)
 	if err != nil {
 		return fail(cmd, err, 1)
@@ -92,14 +91,11 @@ func run(cmd wolf.Command) int {
 	return cmd.Stop(0)
 }
 
-func goFiles(dir string, includeTest bool) (*token.FileSet, []*ast.File) {
+func goFiles(dir string) (*token.FileSet, []*ast.File) {
 	files := make([]*ast.File, 0)
 	fset := token.NewFileSet()
 	gofiles, _ := filepath.Glob(dir + "/*.go")
 	for _, f := range gofiles {
-		if strings.Contains(f, "_test.go") && !includeTest {
-			continue
-		}
 		data, _ := ioutil.ReadFile(f)
 		if bytes.Contains(data, []byte("+build ignore")) {
 			continue
