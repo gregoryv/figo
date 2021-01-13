@@ -57,6 +57,7 @@ func Generate(name string, pkg *doc.Package, fset *token.FileSet) (page *Page, e
 					examples(pkg, fset),
 
 					H3("Package files"),
+					packageFiles(fset),
 				),
 				Section(
 					docs(pkg, fset),
@@ -65,6 +66,20 @@ func Generate(name string, pkg *doc.Package, fset *token.FileSet) (page *Page, e
 		)),
 	)
 	return
+}
+
+func index(p *doc.Package, fset *token.FileSet) *Element {
+	index := Dl(
+		funcLinks(fset, p.Funcs...),
+	)
+	for _, t := range p.Types {
+		index.With(Dd(A(Href("#"+t.Name), "type ", t.Name)))
+		index.With(funcLinks(fset, t.Funcs...)) // Constructors
+		for _, f := range t.Methods {
+			index.With(Dd(Class("method"), genFuncLink(fset, f)))
+		}
+	}
+	return index
 }
 
 func examples(pkg *doc.Package, fset *token.FileSet) *Element {
@@ -82,18 +97,21 @@ func examples(pkg *doc.Package, fset *token.FileSet) *Element {
 	return dl
 }
 
-func index(p *doc.Package, fset *token.FileSet) *Element {
-	index := Dl(
-		funcLinks(fset, p.Funcs...),
-	)
-	for _, t := range p.Types {
-		index.With(Dd(A(Href("#"+t.Name), "type ", t.Name)))
-		index.With(funcLinks(fset, t.Funcs...)) // Constructors
-		for _, f := range t.Methods {
-			index.With(Dd(Class("method"), genFuncLink(fset, f)))
+func packageFiles(fset *token.FileSet) *Element {
+	names := make([]string, 0)
+	fset.Iterate(func(f *token.File) bool {
+		names = append(names, f.Name())
+		return true
+	})
+
+	v := Wrap()
+	for _, name := range names {
+		if strings.Contains(name, "_test.go") {
+			continue
 		}
+		v.With(name, " ")
 	}
-	return index
+	return v
 }
 
 func docs(p *doc.Package, fset *token.FileSet) *Element {
