@@ -85,14 +85,12 @@ func index(p *doc.Package, fset *token.FileSet) *Element {
 func examples(pkg *doc.Package, fset *token.FileSet) *Element {
 	dl := Dl()
 	for _, ex := range allExamples(pkg, fset) {
-		dl.With(
-			Dd(
-				A(
-					Href("#"+exampleId(ex)),
-					ex.Name,
-				),
+		dl.With(Dd(
+			A(
+				Href("#"+exampleId(ex)),
+				ex.Name,
 			),
-		)
+		))
 	}
 	return dl
 }
@@ -104,7 +102,7 @@ func packageFiles(fset *token.FileSet) *Element {
 		return true
 	})
 
-	v := Wrap()
+	v := P()
 	for _, name := range names {
 		if strings.Contains(name, "_test.go") {
 			continue

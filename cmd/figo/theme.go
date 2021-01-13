@@ -73,6 +73,7 @@ func theme() *CSS {
 	)
 	css.Style("p",
 		"margin: 1.25rem",
+		"max-width: 900px",
 	)
 	css.Style("a",
 		gopherblue,
