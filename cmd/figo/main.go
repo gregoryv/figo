@@ -46,18 +46,19 @@ func run(cmd wolf.Command) int {
 
 	// Must be a go package
 	dir := "."
-	pkg, err := golist(dir)
-	if err != nil || pkg == "" {
+	imp, err := golist(dir)
+	if err != nil || imp == "" {
 		return fail(cmd, err, 1)
 	}
-	fset, p, err := parseFiles(pkg, dir)
+	fset, files := goFiles(dir, false)
+	pkg, err := doc.NewFromFiles(fset, files, imp)
 	if err != nil {
 		return fail(cmd, err, 1)
 	}
 
 	switch {
 	case writeToStdout:
-		page, err := Generate(pkg, p, fset)
+		page, err := Generate(imp, pkg, fset)
 		if err != nil {
 			return fail(cmd, err, 1)
 		}
@@ -73,7 +74,7 @@ func run(cmd wolf.Command) int {
 		}
 		defer fh.Close()
 
-		page, err := Generate(pkg, p, fset)
+		page, err := Generate(imp, pkg, fset)
 		if err != nil {
 			return fail(cmd, err, 1)
 		}
@@ -91,13 +92,12 @@ func run(cmd wolf.Command) int {
 	return cmd.Stop(0)
 }
 
-func parseFiles(pkgName, dir string) (*token.FileSet, *doc.Package, error) {
-	// Parse files
+func goFiles(dir string, includeTest bool) (*token.FileSet, []*ast.File) {
 	files := make([]*ast.File, 0)
 	fset := token.NewFileSet()
 	gofiles, _ := filepath.Glob(dir + "/*.go")
 	for _, f := range gofiles {
-		if strings.Contains(f, "_test.go") {
+		if strings.Contains(f, "_test.go") && !includeTest {
 			continue
 		}
 		data, _ := ioutil.ReadFile(f)
@@ -106,8 +106,7 @@ func parseFiles(pkgName, dir string) (*token.FileSet, *doc.Package, error) {
 		}
 		files = append(files, mustParse(fset, f, string(data)))
 	}
-	p, err := doc.NewFromFiles(fset, files, pkgName)
-	return fset, p, err
+	return fset, files
 }
 
 func fail(cmd wolf.Command, err error, exitCode int) int {

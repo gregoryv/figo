@@ -49,6 +49,13 @@ func Generate(name string, pkg *doc.Package, fset *token.FileSet) (page *Page, e
 					A(Name("pkg-index")),
 					H2("Index"),
 					index(pkg, fset),
+
+					A(Name("pkg-examples")),
+					H3("Examples"),
+					Dl(
+						examples(pkg, fset),
+					),
+					H3("Package files"),
 				),
 				Section(
 					docs(pkg, fset),
@@ -104,6 +111,40 @@ func docFunc(section *Element, fset *token.FileSet, f *doc.Func) {
 		Pre(Code(printHTML(fset, f.Decl))),
 		P(toHTML(f.Doc)),
 	)
+}
+
+func examples(pkg *doc.Package, fset *token.FileSet) *Element {
+	all := make([]*doc.Example, 0, len(pkg.Examples))
+	for _, ex := range pkg.Examples {
+		all = append(all, ex)
+	}
+	for _, f := range pkg.Funcs {
+		for _, ex := range f.Examples {
+			all = append(all, ex)
+		}
+	}
+	for _, t := range pkg.Types {
+		for _, ex := range t.Examples {
+			all = append(all, ex)
+		}
+		for _, f := range t.Funcs {
+			for _, ex := range f.Examples {
+				all = append(all, ex)
+			}
+		}
+		for _, f := range t.Methods {
+			for _, ex := range f.Examples {
+				all = append(all, ex)
+			}
+		}
+	}
+	dl := Dl()
+	for _, ex := range all {
+		id := ex.Name
+		name := ex.Name
+		dl.With(A(Href("#"+id), name))
+	}
+	return dl
 }
 
 func docExample(index, section *Element, fset *token.FileSet, examples ...*doc.Example) {
