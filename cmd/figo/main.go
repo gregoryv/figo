@@ -66,7 +66,7 @@ func run(cmd wolf.Command) int {
 	default:
 		// Create output file
 		tmp := os.TempDir()
-		filename := tmp + "/figo.html"
+		filename := tmp + "/figo_" + pkg.Name + ".html"
 		fh, err := os.Create(filename)
 		if err != nil {
 			return fail(cmd, err, 1)

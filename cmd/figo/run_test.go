@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/gregoryv/wolf"
@@ -11,10 +12,10 @@ func Test_default_behaviour(t *testing.T) {
 	cmd := wolf.NewTCmd("figo")
 	defer cmd.Cleanup()
 
-	os.Chdir("/home/gregory/dl/go1/go/src/net/http")
+	os.Chdir(runtime.GOROOT() + "/src/net/http")
 	code := run(cmd)
 	if code != 0 {
-		t.Fail()
+		t.Error(cmd.Dump())
 	}
 }
 

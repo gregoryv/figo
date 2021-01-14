@@ -18,13 +18,13 @@ import (
 )
 
 // Generate go documentation for the given directory and its children.
-func Generate(name string, pkg *doc.Package, fset *token.FileSet) (page *Page, err error) {
+func Generate(imp string, pkg *doc.Package, fset *token.FileSet) (page *Page, err error) {
 	now := time.Now().Format("2006-01-02 15:04:05")
 	page = NewPage(Html(
 		Head(
 			Meta(Charset("utf-8")),
 			Meta(Name("viewport"), Content("width=device-width, initial-scale=1")),
-			Title(name, " - figo"),
+			Title(imp, " - figo"),
 			Style(theme()),
 		),
 		Body(
@@ -33,9 +33,9 @@ func Generate(name string, pkg *doc.Package, fset *token.FileSet) (page *Page, e
 			),
 			Span(Class("timestamp"), now),
 			Article(
-				H1("Package ", path.Base(name)),
+				H1("Package ", path.Base(imp)),
 				Dl(
-					Dd(`import "`, name, `"`),
+					Dd(`import "`, imp, `"`),
 				),
 				Dl(
 					Dd(A(Href("#pkg-overview"), "Overview")),
@@ -201,7 +201,7 @@ func docExamples(fset *token.FileSet, examples ...*doc.Example) *Element {
 			A(Name(exampleId(ex))),
 			A(title), Br(),
 			"Code:", Br(),
-			Pre(Code(printHTML(fset, ex.Code))),
+			Pre(Code(printHTML(fset, ex.Code, ex.Comments...))),
 			output,
 		)
 	}
@@ -229,10 +229,29 @@ func genFuncLink(fset *token.FileSet, f *doc.Func) interface{} {
 	return A(Href("#"+f.Name), printHTML(fset, f.Decl))
 }
 
-func printHTML(fset *token.FileSet, node interface{}) string {
-	var buf bytes.Buffer
-	printer.Fprint(&buf, fset, node)
-	return buf.String()
+func printHTML(fset *token.FileSet, node interface{}, comments ...*ast.CommentGroup) string {
+	switch n := node.(type) {
+	case *ast.BlockStmt:
+		var buf bytes.Buffer
+		cnode := &printer.CommentedNode{
+			Node:     n,
+			Comments: comments, // include comments
+		}
+		conf := &printer.Config{
+			Tabwidth: 0, // skip indentation as we'll strip the {}
+		}
+		conf.Fprint(&buf, fset, cnode)
+		return buf.String()[2 : buf.Len()-2] // strip { and last }
+
+	default:
+		cnode := &printer.CommentedNode{
+			Node:     node,
+			Comments: comments,
+		}
+		var buf bytes.Buffer
+		printer.Fprint(&buf, fset, cnode)
+		return buf.String()
+	}
 }
 
 func toHTML(v string) string {
