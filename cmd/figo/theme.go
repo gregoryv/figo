@@ -91,5 +91,8 @@ func theme() *CSS {
 	css.Style(".title",
 		"padding-left: 1.25rem",
 	)
+	css.Style(".comment",
+		"color: rgb(0, 102, 0)",
+	)
 	return css
 }

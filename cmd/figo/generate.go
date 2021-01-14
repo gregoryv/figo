@@ -10,6 +10,7 @@ import (
 	"go/token"
 	"os/exec"
 	"path"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -140,7 +141,7 @@ func variables(pkg *doc.Package, fset *token.FileSet) *Element {
 	for _, t := range pkg.Vars {
 		w.With(
 			toHTML(t.Doc),
-			Pre(Code(printHTML(fset, t.Decl))),
+			Pre(Code(colorComments(printHTML(fset, t.Decl)))),
 		)
 	}
 	return w
@@ -262,6 +263,13 @@ func genFuncLink(fset *token.FileSet, f *doc.Func) interface{} {
 	return A(Href("#"+f.Name), printHTML(fset, f.Decl))
 }
 
+func colorComments(str string) string {
+	re := regexp.MustCompile("([^:]//.*\n)")
+	span := []byte(`<span class="comment">$1</span>`)
+	b := re.ReplaceAll([]byte(str), span)
+	return string(b)
+}
+
 func printHTML(fset *token.FileSet, node interface{}, comments ...*ast.CommentGroup) string {
 	switch n := node.(type) {
 	case *ast.BlockStmt:
@@ -271,10 +279,13 @@ func printHTML(fset *token.FileSet, node interface{}, comments ...*ast.CommentGr
 			Comments: comments, // include comments
 		}
 		conf := &printer.Config{
-			Tabwidth: 0, // skip indentation as we'll strip the {}
+			Mode:     printer.UseSpaces,
+			Tabwidth: 4,
 		}
 		conf.Fprint(&buf, fset, cnode)
-		return buf.String()[2 : buf.Len()-2] // strip { and last }
+		re := regexp.MustCompile("\n    ") // starting 4 spaces
+		block := re.ReplaceAll(buf.Bytes(), []byte("\n"))
+		return colorComments(string(block[2 : len(block)-2]))
 
 	default:
 		cnode := &printer.CommentedNode{
@@ -287,14 +298,14 @@ func printHTML(fset *token.FileSet, node interface{}, comments ...*ast.CommentGr
 		}
 		var buf bytes.Buffer
 		conf.Fprint(&buf, fset, cnode)
-		return buf.String()
+		return colorComments(buf.String())
 	}
 }
 
 func toHTML(v string) string {
 	var buf bytes.Buffer
 	doc.ToHTML(&buf, v, nil)
-	return buf.String()
+	return colorComments(buf.String())
 }
 
 func golist(dir string) (string, error) {
