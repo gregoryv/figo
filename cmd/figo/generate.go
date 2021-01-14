@@ -66,6 +66,11 @@ func Generate(imp string, pkg *doc.Package, fset *token.FileSet) (page *Page, er
 					constants(pkg, fset),
 				),
 				Section(
+					A(Name("pkg-variables")),
+					H2("Variables"),
+					variables(pkg, fset),
+				),
+				Section(
 					docs(pkg, fset),
 				),
 			),
@@ -77,6 +82,7 @@ func Generate(imp string, pkg *doc.Package, fset *token.FileSet) (page *Page, er
 func index(p *doc.Package, fset *token.FileSet) *Element {
 	index := Dl(
 		Dd(A(Href("#pkg-constants"), "Constants")),
+		Dd(A(Href("#pkg-variables"), "Variables")),
 		funcLinks(fset, p.Funcs...),
 	)
 	for _, t := range p.Types {
@@ -122,6 +128,17 @@ func packageFiles(fset *token.FileSet) *Element {
 func constants(pkg *doc.Package, fset *token.FileSet) *Element {
 	w := Wrap()
 	for _, t := range pkg.Consts {
+		w.With(
+			toHTML(t.Doc),
+			Pre(Code(printHTML(fset, t.Decl))),
+		)
+	}
+	return w
+}
+
+func variables(pkg *doc.Package, fset *token.FileSet) *Element {
+	w := Wrap()
+	for _, t := range pkg.Vars {
 		w.With(
 			toHTML(t.Doc),
 			Pre(Code(printHTML(fset, t.Decl))),
