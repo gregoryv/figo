@@ -24,10 +24,15 @@ func theme() *CSS {
 		"padding-top: 1.313rem",
 		"height: 2.4rem",
 	)
-	css.Style("span.generated",
+	css.Style(".fi",
+		"font-weight: bold",
+	)
+	css.Style("span.timestamp",
 		"float: right",
 		"font-style: italic",
 		"font-size: 0.825rem",
+		"padding-right: 1.313rem",
+		"line-height: 1.3rem",
 	)
 	css.Style("article",
 		"padding: 1.313rem 1.313rem",
