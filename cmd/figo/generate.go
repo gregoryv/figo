@@ -61,6 +61,11 @@ func Generate(imp string, pkg *doc.Package, fset *token.FileSet) (page *Page, er
 					packageFiles(fset),
 				),
 				Section(
+					A(Name("pkg-constants")),
+					H2("Constants"),
+					constants(pkg, fset),
+				),
+				Section(
 					docs(pkg, fset),
 				),
 			),
@@ -71,6 +76,7 @@ func Generate(imp string, pkg *doc.Package, fset *token.FileSet) (page *Page, er
 
 func index(p *doc.Package, fset *token.FileSet) *Element {
 	index := Dl(
+		Dd(A(Href("#pkg-constants"), "Constants")),
 		funcLinks(fset, p.Funcs...),
 	)
 	for _, t := range p.Types {
@@ -111,6 +117,17 @@ func packageFiles(fset *token.FileSet) *Element {
 		v.With(name, " ")
 	}
 	return v
+}
+
+func constants(pkg *doc.Package, fset *token.FileSet) *Element {
+	w := Wrap()
+	for _, t := range pkg.Consts {
+		w.With(
+			toHTML(t.Doc),
+			Pre(Code(printHTML(fset, t.Decl))),
+		)
+	}
+	return w
 }
 
 func docs(p *doc.Package, fset *token.FileSet) *Element {
@@ -199,8 +216,8 @@ func docExamples(fset *token.FileSet, examples ...*doc.Example) *Element {
 		}
 		el.With(
 			A(Name(exampleId(ex))),
-			A(title), Br(),
-			"Code:", Br(),
+			A(Class("title"), title), Br(),
+			Span(Class("title"), "Code:"), Br(),
 			Pre(Code(printHTML(fset, ex.Code, ex.Comments...))),
 			output,
 		)
@@ -248,8 +265,12 @@ func printHTML(fset *token.FileSet, node interface{}, comments ...*ast.CommentGr
 			Node:     node,
 			Comments: comments,
 		}
+		conf := &printer.Config{
+			Mode:     printer.UseSpaces,
+			Tabwidth: 4,
+		}
 		var buf bytes.Buffer
-		printer.Fprint(&buf, fset, cnode)
+		conf.Fprint(&buf, fset, cnode)
 		return buf.String()
 	}
 }

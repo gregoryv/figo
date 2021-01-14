@@ -88,5 +88,8 @@ func theme() *CSS {
 		gopherblue,
 		"text-decoration: underline",
 	)
+	css.Style(".title",
+		"padding-left: 1.25rem",
+	)
 	return css
 }
