@@ -57,10 +57,7 @@ func run(cmd wolf.Command) int {
 
 	switch {
 	case writeToStdout:
-		page, err := Generate(imp, pkg, fset)
-		if err != nil {
-			return fail(cmd, err, 1)
-		}
+		page := Generate(imp, pkg, fset)
 		page.WriteTo(cmd.Stdout())
 
 	default:
@@ -73,11 +70,7 @@ func run(cmd wolf.Command) int {
 		}
 		defer fh.Close()
 
-		page, err := Generate(imp, pkg, fset)
-		if err != nil {
-			return fail(cmd, err, 1)
-		}
-
+		page := Generate(imp, pkg, fset)
 		_, err = page.WriteTo(fh)
 		if err != nil {
 			return fail(cmd, err, 1)

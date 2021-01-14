@@ -17,10 +17,10 @@ import (
 	. "github.com/gregoryv/web"
 )
 
-// Generate go documentation for the given directory and its children.
-func Generate(imp string, pkg *doc.Package, fset *token.FileSet) (page *Page, err error) {
+// Generate go documentation for the given package.
+func Generate(imp string, pkg *doc.Package, fset *token.FileSet) *Page {
 	now := time.Now().Format("2006-01-02 15:04:05")
-	page = NewPage(Html(
+	return NewPage(Html(
 		Head(
 			Meta(Charset("utf-8")),
 			Meta(Name("viewport"), Content("width=device-width, initial-scale=1")),
@@ -76,7 +76,6 @@ func Generate(imp string, pkg *doc.Package, fset *token.FileSet) (page *Page, er
 			),
 		)),
 	)
-	return
 }
 
 func index(p *doc.Package, fset *token.FileSet) *Element {
