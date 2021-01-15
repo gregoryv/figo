@@ -2,7 +2,8 @@ figo - go html documentation generator
 
 # Commands
 
-## cmd/figo1
+## cmd/figo
 
-For small packages with no subdirectories. Produces html to stdout
-similar in look and feel to godoc output.
+Generates one go package documentation similar in look and feel to
+godocs output.
+
