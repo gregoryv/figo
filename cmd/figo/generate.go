@@ -254,7 +254,7 @@ func docExamples(fset *token.FileSet, examples ...*doc.Example) *Element {
 			A(Name(exampleId(ex))),
 			A(Class("title"), title), Br(),
 			Span(Class("title"), "Code:"), Br(),
-			Pre(Code(printHTML(fset, ex.Code, ex.Comments...))),
+			Pre(Code(printHTML(fset, ex.Code))),
 			output,
 		)
 	}
