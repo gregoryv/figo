@@ -15,67 +15,79 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gregoryv/web"
 	. "github.com/gregoryv/web"
 )
 
 // Generate go documentation for the given package.
 func Generate(imp string, pkg *doc.Package, fset *token.FileSet) *Page {
-	now := time.Now().Format("2006-01-02 15:04:05")
-	return NewPage(Html(
+	page := NewPage(Html(
 		Head(
 			Meta(Charset("utf-8")),
 			Meta(Name("viewport"), Content("width=device-width, initial-scale=1")),
 			Title(imp, " - figo"),
 			Style(theme()),
 		),
-		Body(
-			Div(
-				Class("top"), Span(Class("fi"), "Fi"), " - Go Documentation",
-			),
-			Span(Class("timestamp"), now),
-			Article(
-				H1("Package ", path.Base(imp)),
-				Dl(
-					Dd(`import "`, imp, `"`),
-				),
-				Dl(
-					Dd(A(Href("#pkg-overview"), "Overview")),
-					Dd(A(Href("#pkg-index"), "Index")),
-					Dd(A(Href("#pkg-examples"), "Examples")),
-				),
-				Section(
-					A(Name("pkg-overview")),
-					H2("Overview"),
-					toHTML(pkg.Doc),
-					docExamples(fset, pkg.Examples...),
-				),
-				Section(
-					A(Name("pkg-index")),
-					H2("Index"),
-					index(pkg, fset),
+		body(imp, pkg, fset),
+	))
+	return page
+}
 
-					A(Name("pkg-examples")),
-					H3("Examples"),
-					examples(pkg, fset),
-
-					H3("Package files"),
-					packageFiles(fset),
-				),
-				Section(
-					A(Name("pkg-constants")),
-					H2("Constants"),
-					constants(pkg, fset),
-				),
-				Section(
-					A(Name("pkg-variables")),
-					H2("Variables"),
-					variables(pkg, fset),
-				),
-				Section(
-					docs(pkg, fset),
-				),
+func body(imp string, pkg *doc.Package, fset *token.FileSet) *Element {
+	body := Body(
+		Div(
+			Class("top"), Span(Class("fi"), "Fi"), " - Go Documentation",
+		),
+		Span(Class("timestamp"), time.Now().Format("2006-01-02 15:04:05")),
+		Article(
+			H1("Package ", path.Base(imp)),
+			Dl(
+				Dd(`import "`, imp, `"`),
 			),
-		)),
+			Dl(
+				Dd(A(Href("#pkg-overview"), "Overview")),
+				Dd(A(Href("#pkg-index"), "Index")),
+				Dd(A(Href("#pkg-examples"), "Examples")),
+			),
+			Section(
+				A(Name("pkg-overview")),
+				H2("Overview"),
+				overview(pkg, fset),
+			),
+			Section(
+				A(Name("pkg-index")),
+				H2("Index"),
+				index(pkg, fset),
+
+				A(Name("pkg-examples")),
+				H3("Examples"),
+				examples(pkg, fset),
+
+				H3("Package files"),
+				packageFiles(fset),
+			),
+			Section(
+				A(Name("pkg-constants")),
+				H2("Constants"),
+				constants(pkg, fset),
+			),
+			Section(
+				A(Name("pkg-variables")),
+				H2("Variables"),
+				variables(pkg, fset),
+			),
+			Section(
+				docs(pkg, fset),
+			),
+		),
+	)
+	return body
+}
+
+func overview(pkg *doc.Package, fset *token.FileSet) *Element {
+	return Wrap(
+		toHTML(pkg.Doc),
+		docExamples(fset, pkg.Examples...),
 	)
 }
 
@@ -150,7 +162,7 @@ func variables(pkg *doc.Package, fset *token.FileSet) *Element {
 func docs(p *doc.Package, fset *token.FileSet) *Element {
 	section := Wrap()
 	for _, f := range p.Funcs {
-		docFunc(section, fset, f)
+		docFunc(section, p, fset, f)
 		section.With(docExamples(fset, f.Examples...))
 	}
 	for _, t := range p.Types {
@@ -163,11 +175,11 @@ func docs(p *doc.Package, fset *token.FileSet) *Element {
 		)
 		// Constructors
 		for _, f := range t.Funcs {
-			docFunc(section, fset, f)
+			docFunc(section, p, fset, f)
 			section.With(docExamples(fset, f.Examples...))
 		}
 		for _, f := range t.Methods {
-			docFunc(section, fset, f)
+			docFunc(section, p, fset, f)
 			section.With(docExamples(fset, f.Examples...))
 		}
 	}
@@ -209,13 +221,20 @@ func (a exampleByName) Len() int           { return len(a) }
 func (a exampleByName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a exampleByName) Less(i, j int) bool { return a[i].Name < a[j].Name }
 
-func docFunc(section *Element, fset *token.FileSet, f *doc.Func) {
-	section.With(
+func docFunc(section *Element, pkg *doc.Package, fset *token.FileSet, f *doc.Func) {
+	w := Wrap(
 		A(Name(f.Name)),
 		H3("func ", f.Name),
 		Pre(Code(printHTML(fset, f.Decl))),
 		P(toHTML(f.Doc)),
 	)
+	refs := refsTypes(pkg)
+	web.WalkElements(w, func(e *Element) {
+		if e.Name == "code" {
+			web.LinkAll(e, refs)
+		}
+	})
+	section.With(w)
 }
 
 func docExamples(fset *token.FileSet, examples ...*doc.Example) *Element {
@@ -247,6 +266,14 @@ func exampleId(ex *doc.Example) string {
 }
 
 // ----------------------------------------
+
+func refsTypes(pkg *doc.Package) map[string]string {
+	r := make(map[string]string)
+	for _, v := range pkg.Types {
+		r[v.Name] = "#" + v.Name
+	}
+	return r
+}
 
 func funcLinks(fset *token.FileSet, funcs ...*doc.Func) *Element {
 	el := Wrap()

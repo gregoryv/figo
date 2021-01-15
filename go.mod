@@ -10,6 +10,6 @@ require (
 	github.com/gregoryv/golden v0.6.0 // indirect
 	github.com/gregoryv/nexus v0.4.0
 	github.com/gregoryv/qual v0.4.0 // indirect
-	github.com/gregoryv/web v0.14.1-0.20201223093143-9209cc464fa0
+	github.com/gregoryv/web v0.14.1-0.20210115064414-72e349f9e34a
 	github.com/gregoryv/wolf v0.6.0
 )
