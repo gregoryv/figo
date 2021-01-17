@@ -62,7 +62,7 @@ func theme() *CSS {
 		"font-size: 0.875rem",
 		"line-height: 1.3",
 	)
-	css.Style("dd.method",
+	css.Style("dd.method, dd.constructor",
 		"padding-left: 1.25rem",
 	)
 

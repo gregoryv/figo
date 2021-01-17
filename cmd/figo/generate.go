@@ -99,7 +99,9 @@ func index(p *doc.Package, fset *token.FileSet) *Element {
 	)
 	for _, t := range p.Types {
 		index.With(Dd(A(Href("#"+t.Name), "type ", t.Name)))
-		index.With(funcLinks(fset, t.Funcs...)) // Constructors
+		for _, f := range t.Funcs { // Constructors
+			index.With(Dd(Class("constructor"), genFuncLink(fset, f)))
+		}
 		for _, f := range t.Methods {
 			index.With(Dd(Class("method"), genFuncLink(fset, f)))
 		}
