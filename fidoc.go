@@ -1,14 +1,12 @@
-package main
+package figo
 
 import (
 	"bytes"
 	"fmt"
 	"go/ast"
 	"go/doc"
-	"go/parser"
 	"go/printer"
 	"go/token"
-	"os/exec"
 	"path"
 	"regexp"
 	"sort"
@@ -19,8 +17,18 @@ import (
 	. "github.com/gregoryv/web"
 )
 
-// Generate go documentation for the given package.
-func Generate(imp string, pkg *doc.Package, fset *token.FileSet) *Page {
+type FiDocs struct {
+	Import string // ie. github.com/gregoryv/figo
+	*doc.Package
+	*token.FileSet
+}
+
+func (me *FiDocs) NewPage() *Page {
+	return generate(me.Import, me.Package, me.FileSet)
+}
+
+// generate go documentation for the given package.
+func generate(imp string, pkg *doc.Package, fset *token.FileSet) *Page {
 	page := NewPage(Html(
 		Head(
 			Meta(Charset("utf-8")),
@@ -335,20 +343,4 @@ func toHTML(v string) string {
 	var buf bytes.Buffer
 	doc.ToHTML(&buf, v, nil)
 	return colorComments(buf.String())
-}
-
-func golist(dir string) (string, error) {
-	out, err := exec.Command("go", "list", dir).CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("%s", string(out))
-	}
-	return strings.TrimSpace(string(out)), nil
-}
-
-func mustParse(fset *token.FileSet, filename, src string) *ast.File {
-	f, err := parser.ParseFile(fset, filename, src, parser.ParseComments)
-	if err != nil {
-		panic(err)
-	}
-	return f
 }

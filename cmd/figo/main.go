@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"go/ast"
 	"go/doc"
+	"go/parser"
 	"go/token"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/gregoryv/cmdline"
+	"github.com/gregoryv/figo"
 	"github.com/gregoryv/nexus"
 	"github.com/gregoryv/wolf"
 )
@@ -55,9 +58,15 @@ func run(cmd wolf.Command) int {
 		return fail(cmd, err, 1)
 	}
 
+	fidoc := figo.FiDocs{
+		Import:  imp,
+		Package: pkg,
+		FileSet: fset,
+	}
+
 	switch {
 	case writeToStdout:
-		page := Generate(imp, pkg, fset)
+		page := fidoc.NewPage()
 		page.WriteTo(cmd.Stdout())
 
 	default:
@@ -70,7 +79,7 @@ func run(cmd wolf.Command) int {
 		}
 		defer fh.Close()
 
-		page := Generate(imp, pkg, fset)
+		page := fidoc.NewPage()
 		_, err = page.WriteTo(fh)
 		if err != nil {
 			return fail(cmd, err, 1)
@@ -96,6 +105,22 @@ func goFiles(dir string) (*token.FileSet, []*ast.File) {
 		files = append(files, mustParse(fset, f, string(data)))
 	}
 	return fset, files
+}
+
+func golist(dir string) (string, error) {
+	out, err := exec.Command("go", "list", dir).CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("%s", string(out))
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+func mustParse(fset *token.FileSet, filename, src string) *ast.File {
+	f, err := parser.ParseFile(fset, filename, src, parser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	return f
 }
 
 func fail(cmd wolf.Command, err error, exitCode int) int {

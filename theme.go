@@ -1,4 +1,4 @@
-package main
+package figo
 
 import . "github.com/gregoryv/web"
 
