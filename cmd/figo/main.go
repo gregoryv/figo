@@ -19,17 +19,14 @@ import (
 	"github.com/gregoryv/wolf"
 )
 
-func main() {
-	cmd := wolf.NewOSCmd()
-	code := run(cmd)
-	os.Exit(code)
-}
+// Set during build
+var retailInfo string = "none"
 
 func run(cmd wolf.Command) int {
 	var (
-		cli  = cmdline.NewParser(cmd.Args()...)
-		help = cli.Flag("-h, --help")
-
+		cli           = cmdline.NewParser(cmd.Args()...)
+		help          = cli.Flag("-h, --help")
+		rinfo         = cli.Option("--retail-info", "Show who bought this software").Bool()
 		writeToStdout = cli.Flag("-w, --write-to-stdout")
 	)
 
@@ -43,6 +40,11 @@ func run(cmd wolf.Command) int {
 		p.Println()
 		p.Println("If BROWSER is set, the generated file is automatically opened.")
 		cli.WriteUsageTo(p)
+		return cmd.Stop(0)
+
+	case rinfo:
+		p, _ := nexus.NewPrinter(cmd.Stdout())
+		p.Println(retailInfo)
 		return cmd.Stop(0)
 	}
 
@@ -126,4 +128,12 @@ func mustParse(fset *token.FileSet, filename, src string) *ast.File {
 func fail(cmd wolf.Command, err error, exitCode int) int {
 	fmt.Fprintln(cmd.Stderr(), err)
 	return cmd.Stop(exitCode)
+}
+
+// ----------------------------------------
+
+func main() {
+	cmd := wolf.NewOSCmd()
+	code := run(cmd)
+	os.Exit(code)
 }
