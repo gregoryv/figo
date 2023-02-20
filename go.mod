@@ -1,15 +1,15 @@
 module github.com/gregoryv/figo
 
-go 1.15
+go 1.19
 
 require (
-	github.com/gregoryv/asserter v0.4.0 // indirect
-	github.com/gregoryv/cli v0.0.0-20180329083318-9f0f54cf147f // indirect
-	github.com/gregoryv/cmdline v0.4.3-0.20210109061339-714acb458dbe
-	github.com/gregoryv/gocyclo v0.1.0 // indirect
-	github.com/gregoryv/golden v0.6.0 // indirect
-	github.com/gregoryv/nexus v0.4.0
-	github.com/gregoryv/qual v0.4.0 // indirect
-	github.com/gregoryv/web v0.14.1-0.20210115064414-72e349f9e34a
-	github.com/gregoryv/wolf v0.6.0
+	github.com/gregoryv/cmdline v0.12.0
+	github.com/gregoryv/nexus v0.6.0
+	github.com/gregoryv/web v0.24.0
+	github.com/gregoryv/wolf v0.8.0
+)
+
+require (
+	github.com/gregoryv/find v0.6.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
 )
