@@ -5,13 +5,9 @@ filename=$(basename "$path")
 extension="${filename##*.}"
 nameonly="${filename%.*}"
 
-case $extension in
-    go)
-        goimports -w $path
-        gofmt -w $path
-        ;;
-esac
+goimports -w .
+go build -o ~/bin/figo ./cmd/figo
 go test -coverprofile /tmp/c.out ./...
-uncover /tmp/c.out
-go install ./cmd/...
+#uncover /tmp/c.out
+#go install ./cmd/...
 

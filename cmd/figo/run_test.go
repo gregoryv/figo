@@ -5,47 +5,50 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/gregoryv/wolf"
+	"github.com/gregoryv/cmdline"
+	"github.com/gregoryv/cmdline/clitest"
 )
 
 func Test_default_behaviour(t *testing.T) {
-	cmd := wolf.NewTCmd("figo")
-	defer cmd.Cleanup()
+	sh := newShellT(t, "figo")
 
 	os.Chdir(runtime.GOROOT() + "/src/net/http")
-	code := run(cmd)
-	if code != 0 {
-		t.Error(cmd.Dump())
+	main()
+	if sh.ExitCode != 0 {
+		t.Error(sh.Dump())
 	}
 }
 
 func Test_figo_help(t *testing.T) {
-	cmd := wolf.NewTCmd("figo", "-h")
-	defer cmd.Cleanup()
+	sh := newShellT(t, "figo", "-h")
 
-	code := run(cmd)
-	if code != 0 {
-		t.Error(cmd.Dump())
+	main()
+	if sh.ExitCode != 0 {
+		t.Error(sh.Dump())
 	}
 }
 
 func Test_bad_flag(t *testing.T) {
-	cmd := wolf.NewTCmd("figo", "-no-such")
-	defer cmd.Cleanup()
-
-	code := run(cmd)
-	if code != 1 {
-		t.Error(cmd.Dump())
+	sh := newShellT(t, "figo", "-no-such")
+	main()
+	if sh.ExitCode != 1 {
+		t.Error(sh.Dump())
 	}
 }
 
 func Test_write_to_stdout(t *testing.T) {
-	cmd := wolf.NewTCmd("figo", "-w")
-	defer cmd.Cleanup()
+	sh := newShellT(t, "figo", "-w")
 
 	os.Chdir("/home/gregory/dl/go1/go/src/net/http")
-	code := run(cmd)
-	if code != 0 {
-		t.Fail()
+	main()
+	if sh.ExitCode != 0 {
+		t.Error(sh.Dump())
 	}
+}
+
+func newShellT(t *testing.T, args ...string) *clitest.ShellT {
+	sh := clitest.NewShellT(args...)
+	cmdline.DefaultShell = sh
+	t.Cleanup(sh.Cleanup)
+	return sh
 }

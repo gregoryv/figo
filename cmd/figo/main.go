@@ -16,48 +16,46 @@ import (
 	"github.com/gregoryv/cmdline"
 	"github.com/gregoryv/figo"
 	"github.com/gregoryv/nexus"
-	"github.com/gregoryv/wolf"
 )
 
 // Set during build
 var retailInfo string = "none"
 
-func run(cmd wolf.Command) int {
+func main() {
 	var (
-		cli           = cmdline.NewParser(cmd.Args()...)
-		help          = cli.Flag("-h, --help")
+		cli           = cmdline.NewBasicParser()
 		rinfo         = cli.Option("--retail-info", "Show who bought this software").Bool()
 		writeToStdout = cli.Flag("-w, --write-to-stdout")
 	)
+	u := cli.Usage()
+	u.Preface(
+		"figo - generates go documetation to HTML",
+		"",
+		"If BROWSER is set, the generated file is automatically opened.",
+	)
 
-	switch {
-	case !cli.Ok():
-		return fail(cmd, cli.Error(), 1)
+	cli.Parse()
+	sh := cmdline.DefaultShell
 
-	case help:
-		p, _ := nexus.NewPrinter(cmd.Stderr())
-		p.Println(cmd.Args()[0], "- generates go documentation to HTML")
-		p.Println()
-		p.Println("If BROWSER is set, the generated file is automatically opened.")
-		cli.WriteUsageTo(p)
-		return cmd.Stop(0)
-
-	case rinfo:
-		p, _ := nexus.NewPrinter(cmd.Stdout())
+	if rinfo {
+		p, _ := nexus.NewPrinter(sh.Stdout())
 		p.Println(retailInfo)
-		return cmd.Stop(0)
+		sh.Exit(0)
+		return
 	}
 
 	// Must be a go package
 	dir := "."
 	imp, err := golist(dir)
 	if err != nil || imp == "" {
-		return fail(cmd, err, 1)
+		sh.Fatal(err)
+		return
 	}
 	fset, files := goFiles(dir)
 	pkg, err := doc.NewFromFiles(fset, files, imp)
 	if err != nil {
-		return fail(cmd, err, 1)
+		sh.Fatal(err)
+		return
 	}
 
 	fidoc := figo.FiDocs{
@@ -69,7 +67,7 @@ func run(cmd wolf.Command) int {
 	switch {
 	case writeToStdout:
 		page := fidoc.NewPage()
-		page.WriteTo(cmd.Stdout())
+		page.WriteTo(sh.Stdout())
 
 	default:
 		// Create output file
@@ -77,22 +75,23 @@ func run(cmd wolf.Command) int {
 		filename := tmp + "/figo_" + pkg.Name + ".html"
 		fh, err := os.Create(filename)
 		if err != nil {
-			return fail(cmd, err, 1)
+			sh.Fatal(err)
+			return
 		}
 		defer fh.Close()
 
 		page := fidoc.NewPage()
 		_, err = page.WriteTo(fh)
 		if err != nil {
-			return fail(cmd, err, 1)
+			sh.Fatal(err)
+			return
 		}
-		browser := cmd.Getenv("BROWSER")
+		browser := sh.Getenv("BROWSER")
 		if browser != "" {
 			exec.Command(browser, filename).Run()
 		}
 		fmt.Println(filename)
 	}
-	return cmd.Stop(0)
 }
 
 func goFiles(dir string) (*token.FileSet, []*ast.File) {
@@ -123,17 +122,4 @@ func mustParse(fset *token.FileSet, filename, src string) *ast.File {
 		panic(err)
 	}
 	return f
-}
-
-func fail(cmd wolf.Command, err error, exitCode int) int {
-	fmt.Fprintln(cmd.Stderr(), err)
-	return cmd.Stop(exitCode)
-}
-
-// ----------------------------------------
-
-func main() {
-	cmd := wolf.NewOSCmd()
-	code := run(cmd)
-	os.Exit(code)
 }
