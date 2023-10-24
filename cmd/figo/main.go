@@ -23,8 +23,11 @@ var retailInfo string = "none"
 
 func main() {
 	var (
-		cli           = cmdline.NewBasicParser()
-		rinfo         = cli.Option("--retail-info", "Show who bought this software").Bool()
+		cli   = cmdline.NewBasicParser()
+		rinfo = cli.Option(
+			"--retail-info",
+			"Show who bought this software",
+		).Bool(false)
 		writeToStdout = cli.Flag("-w, --write-to-stdout")
 	)
 	u := cli.Usage()
