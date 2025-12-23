@@ -1,3 +1,5 @@
+ARCHIVED! Moved to https://sogvin.com/figo
+
 figo - go html documentation generator
 
 # Commands
